@@ -1,0 +1,61 @@
+/*
+ * 解压计数器 - 全局样式 & CSS 变量
+ * 所有颜色/尺寸在此集中管理，各页面通过 var() 引用
+ */
+
+/* 解压计数器 - 全局变量 */
+page {
+    /* 背景 */
+    --bg-primary: #0a0a0a;
+    --bg-secondary: #141414;
+    --bg-overlay: rgba(0, 0, 0, 0.6);
+
+    /* 文字 */
+    --text-primary: #f0e8d8;
+    --text-secondary: #998878;
+
+    /* 功能色 */
+    --green-main: #4caf50;
+    --green-light: #81c784;
+    --green-gradient-start: #66bb6a;
+    --green-gradient-end: #388e3c;
+
+    --orange-reset: #cc2222;
+    --orange-light: #ff6666;
+    --orange-gradient-start: #dd3333;
+    --orange-gradient-end: #991111;
+
+    /* 滚轮金属 */
+    --metal-base: #78909c;
+    --metal-highlight: #b0bec5;
+    --metal-shadow: #455a64;
+
+    /* 拉带 */
+    --strap-yellow: #ffc107;
+    --strap-coral: #ff6b6b;
+
+    /* 模式指示器 */
+    --mode-off: rgba(255, 255, 255, 0.28);
+    --mode-on: rgba(255, 255, 255, 0.75);
+
+    /* 字体 */
+    --font-display: 'Courier New', monospace;
+
+    background-color: #0a0a0a;
+    color: #f0e8d8;
+    overflow: hidden;
+    height: 100%;
+}
+
+/* 全局 reset — WXSS 不支持 * 通配选择器，用 view 替代 */
+view {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* 禁止用户选中 */
+view {
+    -webkit-user-select: none;
+    user-select: none;
+}

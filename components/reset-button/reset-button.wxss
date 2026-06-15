@@ -1,0 +1,18 @@
+/* 归零按钮组件样式 */
+.reset-btn {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease;
+}
+
+.reset-btn--pressed {
+  transform: scale(0.9);
+}
+
+.reset-btn__canvas {
+  width: 72rpx;
+  height: 72rpx;
+}

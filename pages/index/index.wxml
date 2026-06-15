@@ -1,0 +1,41 @@
+<!--
+  解压计数器 - 主页面布局 v4
+  数字下方操作行 / 3画布走马灯 / 数字滚动
+-->
+<view class="page" style="padding-top:{{safeAreaTop}}px;padding-bottom:{{safeAreaBottom}}px;">
+  <view class="device-card">
+
+    <!-- ── 机械计数显示屏（滚筒数字）── -->
+    <view class="counter-display">
+      <view class="digit-slot" wx:for="{{ digitSlots }}" wx:key="index" wx:for-item="slot">
+        <view class="digit-strip" style="transform: translateY({{ slot.translateY }})">
+          <text class="digit-char" wx:for="{{ digits10 }}" wx:key="*this">{{ item }}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- ── 数字下方：归零（左）+ 统计（右）── -->
+    <view class="counter-actions">
+      <view class="action-btn action-btn--reset">
+        <reset-button id="reset-btn" bind:reset="onReset"></reset-button>
+      </view>
+      <view class="action-btn action-btn--stats" bindtap="onStatsTap">
+        <canvas type="2d" id="stats-icon-canvas" class="stats-icon-canvas"></canvas>
+      </view>
+    </view>
+
+    <!-- ── 模式交互区 ── -->
+    <view class="mode-area">
+      <canvas type="2d" id="mode-canvas" class="mode-canvas-full" bindtouchstart="onCanvasTouch" bindtouchmove="onCanvasTouchMove" bindtouchend="onCanvasTouchEnd"></canvas>
+    </view>
+
+    <!-- ── 水平滑动模式选择器 ── -->
+    <view class="mode-selector" bindtouchstart="onSelectorTouchStart" bindtouchmove="onSelectorTouchMove" bindtouchend="onSelectorTouchEnd" bindtouchcancel="onSelectorTouchEnd">
+      <view wx:for="{{ modes }}" wx:key="id" class="selector-item {{ item.id === currentMode ? 'selector-item--active' : '' }}" data-mode="{{ item.id }}" bindtap="onModeTap">
+        <view class="selector-dot"></view>
+        <text class="selector-label">{{ item.id }}</text>
+      </view>
+    </view>
+
+  </view>
+</view>

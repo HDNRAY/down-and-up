@@ -1,0 +1,6 @@
+{
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "reset-button": "../../components/reset-button/reset-button"
+  }
+}

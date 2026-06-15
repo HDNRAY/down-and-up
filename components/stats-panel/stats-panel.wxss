@@ -1,0 +1,151 @@
+/* 统计面板样式 */
+.stats-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: flex-end;
+  z-index: 100;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.stats-panel {
+  width: 100%;
+  height: 80vh;
+  background-color: var(--bg-secondary);
+  border-radius: 32rpx 32rpx 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 40rpx;
+  animation: slideUp 0.3s ease;
+  overflow-y: auto;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* ─── 顶部 ─── */
+.stats-panel__header {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  height: 80rpx;
+  flex-shrink: 0;
+  padding-top: 20rpx;
+}
+
+.stats-panel__close {
+  width: 48rpx;
+  height: 48rpx;
+  opacity: 0.6;
+}
+
+.stats-close-canvas {
+  width: 48rpx;
+  height: 48rpx;
+}
+
+/* ─── 今日总计 ─── */
+.stats-panel__total {
+  width: 100%;
+  text-align: center;
+  padding: 20rpx 0;
+  flex-shrink: 0;
+}
+
+.stats-panel__total-number {
+  font-family: var(--font-display);
+  font-size: 72rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+  letter-spacing: 2rpx;
+}
+
+/* ─── 环形图区 ─── */
+.stats-panel__rings {
+  display: flex;
+  justify-content: center;
+  gap: 32rpx;
+  width: 100%;
+  padding: 20rpx 0;
+  flex-shrink: 0;
+}
+
+.ring-item {
+  width: 120rpx;
+  height: 140rpx;
+}
+
+.ring-canvas {
+  width: 120rpx;
+  height: 120rpx;
+}
+
+/* ─── 热力图 ─── */
+.stats-panel__heatmap {
+  width: 100%;
+  padding: 20rpx 0;
+  flex-shrink: 0;
+}
+
+.heatmap-canvas {
+  width: 100%;
+  height: 200rpx;
+}
+
+/* ─── 趋势图 ─── */
+.stats-panel__trend {
+  width: 100%;
+  padding: 20rpx 0;
+  flex-shrink: 0;
+}
+
+.trend-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 24rpx;
+  margin-bottom: 16rpx;
+}
+
+.trend-tab {
+  width: 80rpx;
+  height: 8rpx;
+  border-radius: 4rpx;
+  background-color: var(--mode-off);
+  transition: background-color 0.2s;
+}
+
+.trend-tab--active {
+  background-color: var(--mode-on);
+}
+
+.trend-canvas {
+  width: 100%;
+  height: 200rpx;
+}
+
+/* ─── 分享 ─── */
+.stats-panel__share {
+  width: 64rpx;
+  height: 64rpx;
+  opacity: 0.5;
+  margin: 20rpx 0;
+  flex-shrink: 0;
+}
+
+.share-canvas {
+  width: 64rpx;
+  height: 64rpx;
+}

@@ -1,0 +1,13 @@
+<!--
+  解压计数器 - 归零按钮组件
+  数字右侧小圆形按钮，暖橙红渐变，逆时针回转箭头图标
+  按下有弹性缩放 + 音效 + 震动反馈
+-->
+<view
+  class="reset-btn {{ pressed ? 'reset-btn--pressed' : '' }}"
+  bindtouchstart="onTouchStart"
+  bindtouchend="onTouchEnd"
+  bindtouchcancel="onTouchEnd"
+>
+  <canvas type="2d" id="reset-btn-canvas" class="reset-btn__canvas"></canvas>
+</view>

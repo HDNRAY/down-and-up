@@ -1,0 +1,100 @@
+/* 统计页面样式 */
+.stats-page {
+  width: 100vw;
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80rpx 40rpx 40rpx;
+}
+
+.stats-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 80rpx;
+  flex-shrink: 0;
+}
+
+.stats-back {
+  width: 48rpx;
+  height: 48rpx;
+  opacity: 0.6;
+}
+
+.back-canvas {
+  width: 48rpx;
+  height: 48rpx;
+}
+
+.stats-total {
+  width: 100%;
+  text-align: center;
+  padding: 30rpx 0;
+}
+
+.stats-total-number {
+  font-family: var(--font-display);
+  font-size: 72rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+  letter-spacing: 2rpx;
+}
+
+.stats-rings {
+  display: flex;
+  justify-content: center;
+  gap: 40rpx;
+  width: 100%;
+  padding: 30rpx 0;
+}
+
+.ring-item {
+  width: 140rpx;
+  height: 160rpx;
+}
+
+.ring-canvas {
+  width: 140rpx;
+  height: 140rpx;
+}
+
+.stats-heatmap {
+  width: 100%;
+  padding: 20rpx 0;
+}
+
+.heatmap-canvas {
+  width: 100%;
+  height: 260rpx;
+}
+
+.stats-trend {
+  width: 100%;
+  padding: 20rpx 0;
+}
+
+.trend-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 24rpx;
+  margin-bottom: 16rpx;
+}
+
+.trend-tab {
+  width: 80rpx;
+  height: 8rpx;
+  border-radius: 4rpx;
+  background-color: var(--mode-off);
+}
+
+.trend-tab--active {
+  background-color: var(--mode-on);
+}
+
+.trend-canvas {
+  width: 100%;
+  height: 240rpx;
+}

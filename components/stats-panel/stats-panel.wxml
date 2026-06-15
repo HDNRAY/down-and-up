@@ -1,0 +1,61 @@
+<!--
+  解压计数器 - 统计面板
+  遮罩层 + 从底部滑入的面板
+  包含：模式环形图、日历热力图、7天/30天趋势折线图、分享按钮
+-->
+<view class="stats-overlay" bindtap="onOverlayTap">
+  <view class="stats-panel" catchtap="">
+    <!-- 顶部：标题 + 关闭 -->
+    <view class="stats-panel__header">
+      <view class="stats-panel__title"></view>
+      <view class="stats-panel__close" bindtap="onClose">
+        <canvas type="2d" id="stats-close-canvas" class="stats-close-canvas"></canvas>
+      </view>
+    </view>
+
+    <!-- 今日总计数字（纯图形展示） -->
+    <view class="stats-panel__total">
+      <text class="stats-panel__total-number">{{ totalDisplay }}</text>
+    </view>
+
+    <!-- 模式环形图区 -->
+    <view class="stats-panel__rings">
+      <view class="ring-item">
+        <canvas type="2d" id="ring-press" class="ring-canvas"></canvas>
+      </view>
+      <view class="ring-item">
+        <canvas type="2d" id="ring-scroll" class="ring-canvas"></canvas>
+      </view>
+      <view class="ring-item">
+        <canvas type="2d" id="ring-pull" class="ring-canvas"></canvas>
+      </view>
+    </view>
+
+    <!-- 日历热力图 -->
+    <view class="stats-panel__heatmap">
+      <canvas type="2d" id="heatmap-canvas" class="heatmap-canvas"></canvas>
+    </view>
+
+    <!-- 底部：7天/30天切换 + 趋势折线图 -->
+    <view class="stats-panel__trend">
+      <view class="trend-tabs">
+        <view
+          class="trend-tab {{ trendDays === 7 ? 'trend-tab--active' : '' }}"
+          data-days="7"
+          bindtap="onTrendTabTap"
+        ></view>
+        <view
+          class="trend-tab {{ trendDays === 30 ? 'trend-tab--active' : '' }}"
+          data-days="30"
+          bindtap="onTrendTabTap"
+        ></view>
+      </view>
+      <canvas type="2d" id="trend-canvas" class="trend-canvas"></canvas>
+    </view>
+
+    <!-- 分享按钮 -->
+    <view class="stats-panel__share" bindtap="onShare">
+      <canvas type="2d" id="share-canvas" class="share-canvas"></canvas>
+    </view>
+  </view>
+</view>

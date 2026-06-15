@@ -1,0 +1,245 @@
+/* 解压计数器 - 主页面样式 v4 */
+
+/* ─── 页面背景 ─── */
+.page {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100vw;
+    height: 100vh;
+    background-color: #0a0a0a;
+    overflow: hidden;
+    box-sizing: border-box;
+    padding-left: 14rpx;
+    padding-right: 14rpx;
+}
+
+/* ─── 主卡片 ─── */
+.device-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(150deg, #888888 0%, #6a6a6a 40%, #505050 100%);
+    border-radius: 44rpx;
+    margin-top: 100rpx;
+    padding: 24rpx 24rpx 24rpx;
+    overflow: hidden;
+    box-shadow:
+        0 12rpx 48rpx rgba(0, 0, 0, 0.6),
+        0 2rpx 8rpx rgba(0, 0, 0, 0.4),
+        inset 0 1rpx 0 rgba(255, 255, 255, 0.15),
+        inset 0 -1rpx 0 rgba(0, 0, 0, 0.25);
+}
+
+/* ─── 机械显示屏（滚筒数字） ─── */
+.counter-display {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    background: #111111;
+    border-radius: 20rpx;
+    margin: 0 0 20rpx;
+    padding: 18rpx 16rpx 14rpx;
+    overflow: hidden;
+    height: 180rpx;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    box-shadow:
+        inset 0 4rpx 20rpx rgba(0, 0, 0, 0.95),
+        inset 0 1rpx 4rpx rgba(0, 0, 0, 0.8),
+        0 1rpx 0 rgba(255, 255, 255, 0.06);
+}
+
+.digit-slot {
+    height: 140rpx;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    margin: 0 3rpx;
+}
+
+.digit-strip {
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+    will-change: transform;
+}
+
+.digit-char {
+    height: 140rpx;
+    line-height: 140rpx;
+    font-family: 'Courier New', 'Menlo', monospace;
+    font-size: 152rpx;
+    font-weight: bold;
+    color: #f0e8d8;
+    text-align: center;
+    min-width: 88rpx;
+    letter-spacing: 0;
+    text-shadow:
+        0 0 20rpx rgba(240, 232, 216, 0.2),
+        0 2rpx 4rpx rgba(0, 0, 0, 0.9);
+}
+
+/* ─── 数字下方操作行 ─── */
+.counter-actions {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 4rpx;
+    margin-bottom: 20rpx;
+    height: 64rpx;
+    flex-shrink: 0;
+}
+
+.action-btn {
+    width: 64rpx;
+    height: 64rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.action-btn--stats {
+    background-color: rgba(0, 0, 0, 0.35);
+    box-shadow:
+        inset 0 1rpx 4rpx rgba(0, 0, 0, 0.6),
+        0 1rpx 0 rgba(255, 255, 255, 0.06);
+}
+
+.stats-icon-canvas {
+    width: 36rpx;
+    height: 36rpx;
+}
+
+/* ─── 模式交互区 ─── */
+.mode-area {
+    flex: 1;
+    overflow: hidden;
+    border-radius: 18rpx;
+    margin: 0;
+    box-shadow: inset 0 2rpx 12rpx rgba(0, 0, 0, 0.35);
+    display: flex;
+    flex-direction: column;
+}
+
+.mode-canvas-full {
+    flex: 1;
+    width: 100%;
+    display: block;
+}
+
+.carousel-track {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+    transition: transform 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+    will-change: transform;
+}
+
+.carousel-track--no-transition {
+    transition: none;
+}
+
+.carousel-page {
+    height: 100%;
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.mode-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* ─── 模式占位卡片 ─── */
+.mode-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12rpx;
+    opacity: 0.65;
+}
+
+.mode-placeholder__icon {
+    font-size: 72rpx;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1;
+}
+
+.mode-placeholder__name {
+    font-size: 24rpx;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 2rpx;
+}
+
+/* ─── 活跃模式真 canvas ─── */
+.mode-canvas-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    display: block;
+    pointer-events: none;
+}
+
+/* ─── 模式选择器（横滑 + 点按）─── */
+.mode-selector {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 20rpx;
+    height: 56rpx;
+    margin-top: 24rpx;
+    flex-shrink: 0;
+    padding: 0 20rpx;
+}
+
+.selector-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6rpx;
+    padding: 10rpx 16rpx;
+    border-radius: 12rpx;
+    transition: background 0.2s;
+}
+
+.selector-item--active {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.selector-dot {
+    width: 12rpx;
+    height: 12rpx;
+    border-radius: 6rpx;
+    background-color: rgba(255, 255, 255, 0.3);
+    transition:
+        width 0.25s ease,
+        background-color 0.2s;
+}
+
+.selector-item--active .selector-dot {
+    width: 32rpx;
+    background-color: rgba(255, 255, 255, 0.75);
+}
+
+.selector-label {
+    font-size: 18rpx;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 1rpx;
+}
+
+.selector-item--active .selector-label {
+    color: rgba(255, 255, 255, 0.8);
+}

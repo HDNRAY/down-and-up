@@ -1,0 +1,37 @@
+<!-- 统计页面 -->
+<view class="stats-page">
+  <view class="stats-header">
+    <view class="stats-back" bindtap="onBack">
+      <canvas type="2d" id="back-canvas" class="back-canvas"></canvas>
+    </view>
+    <text class="stats-title"></text>
+  </view>
+
+  <view class="stats-total">
+    <text class="stats-total-number">{{ totalDisplay }}</text>
+  </view>
+
+  <view class="stats-rings">
+    <view class="ring-item">
+      <canvas type="2d" id="ring-press" class="ring-canvas"></canvas>
+    </view>
+    <view class="ring-item">
+      <canvas type="2d" id="ring-scroll" class="ring-canvas"></canvas>
+    </view>
+    <view class="ring-item">
+      <canvas type="2d" id="ring-pull" class="ring-canvas"></canvas>
+    </view>
+  </view>
+
+  <view class="stats-heatmap">
+    <canvas type="2d" id="heatmap-canvas" class="heatmap-canvas"></canvas>
+  </view>
+
+  <view class="stats-trend">
+    <view class="trend-tabs">
+      <view class="trend-tab {{ trendDays === 7 ? 'trend-tab--active' : '' }}" data-days="7" bindtap="onTrendTabTap"></view>
+      <view class="trend-tab {{ trendDays === 30 ? 'trend-tab--active' : '' }}" data-days="30" bindtap="onTrendTabTap"></view>
+    </view>
+    <canvas type="2d" id="trend-canvas" class="trend-canvas"></canvas>
+  </view>
+</view>
