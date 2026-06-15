@@ -39,11 +39,8 @@ export class PullMode {
         this._dragStartY = 0
 
         // 弹回弹簧
-        this.snapSpring = new Spring({ stiffness: 320, damping: 18 })
+        this.snapSpring = new Spring({ stiffness: 500, damping: 14, mass: 1 })
         this._isSnapping = false
-
-        // 震动粒子
-        this.shakeAmt = 0
 
         // 刻度
         this.DOT_COUNT = 3
@@ -72,15 +69,12 @@ export class PullMode {
 
         if (this._isSnapping) {
             this.snapSpring.update(sd)
-            this.pullOffset = Math.max(0, this.snapSpring.value)
+            this.pullOffset = this.snapSpring.value
 
-            const settled = (this.snapSpring.isAtRest && this.pullOffset < 0.5) || this.pullOffset < 0.5
-
-            if (settled) {
+            if (this.snapSpring.isAtRest) {
                 this.pullOffset = 0
                 this._isSnapping = false
                 this.snapSpring.setValue(0)
-                this.shakeAmt = 0
             }
         } else if (this._isDragging) {
             // 逐格计数 + 震动
@@ -109,12 +103,6 @@ export class PullMode {
                 this._endVibeTimer = 0
             }
         }
-
-        if (this.shakeAmt > 0.5) {
-            this.shakeAmt *= Math.pow(0.8, dt * 60)
-        } else {
-            this.shakeAmt = 0
-        }
     }
 
     render(ctx) {
@@ -123,15 +111,8 @@ export class PullMode {
                 h = this.height
             clearCanvas(ctx, w, h)
 
-            const sx = this.shakeAmt > 0.5 ? (Math.random() - 0.5) * this.shakeAmt : 0
-            const sy = this.shakeAmt > 0.5 ? (Math.random() - 0.5) * this.shakeAmt * 0.5 : 0
-            ctx.save()
-            ctx.translate(sx, sy)
-
             this._drawPlate(ctx)
             this._drawBag(ctx)
-
-            ctx.restore()
         } catch (e) {
             console.warn('PullMode.render error:', e)
         }
@@ -182,18 +163,6 @@ export class PullMode {
         ctx.shadowOffsetY = 2
         ctx.fill()
         ctx.restore()
-
-        // 开口内边缘微光（拉拽时变亮）
-        const glowAlpha = Math.min(0.5, (this.pullOffset / this.MAX_PULL) * 0.5)
-        if (glowAlpha > 0.01) {
-            ctx.save()
-            ctx.beginPath()
-            pathRoundRect(ctx, cx - sw / 2, py - sh / 2, sw, sh, sr)
-            ctx.strokeStyle = `rgba(255, 200, 80, ${glowAlpha})`
-            ctx.lineWidth = 1.5
-            ctx.stroke()
-            ctx.restore()
-        }
     }
 
     /* ─── 皮带 ─── */
@@ -298,8 +267,6 @@ export class PullMode {
             this._isSnapping = true
             this._isDragging = false
 
-            const cnt = this._lastDotReached
-            this.shakeAmt = cnt >= 3 ? 10 : cnt * 3
             if (this.audio) this.audio.play('snap')
         } catch (err) {
             console.warn('PullMode.touchEnd error:', err)

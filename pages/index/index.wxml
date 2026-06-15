@@ -33,7 +33,7 @@
     <view class="mode-selector" bindtouchstart="onSelectorTouchStart" bindtouchmove="onSelectorTouchMove" bindtouchend="onSelectorTouchEnd" bindtouchcancel="onSelectorTouchEnd">
       <view wx:for="{{ modes }}" wx:key="id" class="selector-item {{ item.id === currentMode ? 'selector-item--active' : '' }}" data-mode="{{ item.id }}" bindtap="onModeTap">
         <view class="selector-dot"></view>
-        <text class="selector-label">{{ item.id }}</text>
+        <text class="selector-label">{{ item.label }}</text>
       </view>
     </view>
 

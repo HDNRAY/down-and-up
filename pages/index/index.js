@@ -12,7 +12,11 @@ const app = getApp()
 app.audioEngine = audioEngine
 app.hapticEngine = hapticEngine
 
-const MODE_LIST = [{ id: 'pull' }, { id: 'scroll' }, { id: 'press' }]
+const MODE_LIST = [
+    { id: 'pull', label: 'PULL' },
+    { id: 'scroll', label: 'SCROLL' },
+    { id: 'press', label: 'PRESS' },
+]
 
 Page({
     data: {

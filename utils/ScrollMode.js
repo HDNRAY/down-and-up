@@ -15,7 +15,6 @@ export class ScrollMode {
         this.haptic = config.hapticEngine
         this.onCountChange = config.onCountChange
 
-        this.TICK_SPACING = 60
         this.TICK_COUNT = 5
         this.DETENT_THRESHOLD = 0.5
 
@@ -35,6 +34,11 @@ export class ScrollMode {
         this._touchId = null
 
         this._tickPulse = 0
+
+        // 动态计算（每帧 _calcLayout 更新）
+        this._tickSpacing = 60
+        this._tickAlignOffset = 0
+        this._touchBaseOffset = 0
     }
 
     _calcLayout() {
@@ -42,10 +46,16 @@ export class ScrollMode {
         this.wheelCy = this.height / 2
         this.wheelW = this.width * 0.4
         this.wheelH = this.height * 0.72
+        // 动态刻度间距 = 视觉间距，保证计数与渲染一致
+        this._tickSpacing = (this.wheelH * 0.75) / this.TICK_COUNT
+        // 对齐偏移：刻度经过三角指针时计数
+        const startY = this.wheelCy - this.wheelH * 0.375
+        const tickCenterY = startY + 2 * this._tickSpacing
+        this._tickAlignOffset = this.wheelCy - tickCenterY
     }
 
     _nearestTick(offset) {
-        return Math.round(offset / this.TICK_SPACING) * this.TICK_SPACING
+        return Math.round(offset / this._tickSpacing) * this._tickSpacing
     }
 
     update(dt) {
@@ -113,14 +123,14 @@ export class ScrollMode {
         ctx.restore()
 
         // 大刻度（等长）
-        const spacing = (hh * 0.75) / this.TICK_COUNT
         const startY = ry + hh * 0.125
 
         ctx.save()
         for (let i = -2; i <= this.TICK_COUNT + 2; i++) {
-            const y = startY + ((i * spacing + this._scrollOffset) % (hh * 0.75))
+            const visualOffset = this._scrollOffset + this._tickAlignOffset
+            const y = startY + ((i * this._tickSpacing + visualOffset) % (hh * 0.75))
             let wy = ((((y - startY) % (hh * 0.75)) + hh * 0.75) % (hh * 0.75)) + startY
-            if (wy < ry - spacing || wy > ry + hh + spacing) continue
+            if (wy < ry - this._tickSpacing || wy > ry + hh + this._tickSpacing) continue
 
             const tw = hw * 0.45
             const tx1 = rx + (hw - tw) / 2
@@ -140,8 +150,8 @@ export class ScrollMode {
         ctx.fillStyle = '#888'
         ctx.beginPath()
         ctx.moveTo(rx - 2, cy)
-        ctx.lineTo(rx - 8, cy - 7)
-        ctx.lineTo(rx - 8, cy + 7)
+        ctx.lineTo(rx - 11, cy - 10)
+        ctx.lineTo(rx - 11, cy + 10)
         ctx.closePath()
         ctx.fill()
         ctx.restore()
@@ -185,6 +195,7 @@ export class ScrollMode {
         this._touchId = t.identifier
         this.inertia.velocity = 0
         this._isSnapping = false
+        this._touchBaseOffset = this._scrollOffset
     }
 
     handleTouchMove(e) {
@@ -193,8 +204,13 @@ export class ScrollMode {
         if (!t) return
         const dy = t.y - this._lastTouchY
         this._lastTouchY = t.y
-        this._scrollOffset += dy
-        this.inertia.velocity += dy * 80
+        // 渐进阻力：离起点越远，阻力越大
+        const distFromStart = Math.abs(this._scrollOffset - this._touchBaseOffset)
+        const tFactor = Math.min(distFromStart / (this._tickSpacing * 3), 1)
+        const resistance = 1 - tFactor * 0.4
+        const adjustedDy = dy * resistance
+        this._scrollOffset += adjustedDy
+        this.inertia.velocity += adjustedDy * 80
         this._checkTickCrossing(dy)
     }
 
@@ -203,13 +219,14 @@ export class ScrollMode {
         this._isDragging = false
         this._touchId = null
 
-        const tickProgress = (this._scrollOffset % this.TICK_SPACING) / this.TICK_SPACING
+        const visualOffset = this._scrollOffset + this._tickAlignOffset
+        const tickProgress = (visualOffset % this._tickSpacing) / this._tickSpacing
         const absProgress = Math.abs(tickProgress)
         if (absProgress > 0.01) {
             const dir = tickProgress > 0 ? 1 : -1
             const target =
                 absProgress > this.DETENT_THRESHOLD
-                    ? this._nearestTick(this._scrollOffset + dir * this.TICK_SPACING * 0.1)
+                    ? this._nearestTick(this._scrollOffset + dir * this._tickSpacing * 0.1)
                     : this._nearestTick(this._scrollOffset)
             if (Math.abs(this._scrollOffset - target) > 0.5) {
                 this._isSnapping = true
@@ -221,7 +238,8 @@ export class ScrollMode {
     }
 
     _checkTickCrossing(delta) {
-        const ct = Math.floor(this._scrollOffset / this.TICK_SPACING)
+        const visualOffset = this._scrollOffset + this._tickAlignOffset
+        const ct = Math.floor(visualOffset / this._tickSpacing)
         const lt = this._lastTickIndex
         if (ct !== lt) {
             const diff = Math.abs(ct - lt)
@@ -243,6 +261,7 @@ export class ScrollMode {
         this._lastTickIndex = 0
         this._tickPulse = 0
         this.inertia.velocity = 0
+        this._touchBaseOffset = 0
     }
 
     _findTouch(e) {
