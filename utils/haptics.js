@@ -5,94 +5,126 @@
  */
 
 class HapticEngine {
-  constructor() {
-    this._lastVibrateTime = 0
-    this._minInterval = 50 // ms
-    this._enabled = true
-  }
-
-  /** 开关 */
-  get enabled() {
-    return this._enabled
-  }
-
-  set enabled(val) {
-    this._enabled = val
-  }
-
-  toggle() {
-    this._enabled = !this._enabled
-    return this._enabled
-  }
-
-  /**
-   * 轻震动 — 对应 light
-   * 用于：绿色按钮按压、归零按钮按压、拉带第1格
-   */
-  light() {
-    this._vibrate('light')
-  }
-
-  /**
-   * 中震动 — 对应 medium
-   * 用于：滚轮刻度、拉带第2格
-   */
-  medium() {
-    this._vibrate('medium')
-  }
-
-  /**
-   * 重震动 — 对应 heavy
-   * 用于：归零触发、拉带第3/4格
-   */
-  heavy() {
-    this._vibrate('heavy')
-  }
-
-  /**
-   * 长震动 — 约 40ms
-   * 用于：归零事件、拉带弹回
-   */
-  long() {
-    if (!this._enabled) return
-    if (!this._rateLimit()) return
-
-    try {
-      wx.vibrateLong()
-      this._lastVibrateTime = Date.now()
-    } catch (e) {
-      // 不支持或权限不足，静默失败
-      console.debug('HapticEngine: vibrateLong not supported')
+    constructor() {
+        this._lastVibrateTime = 0
+        this._minInterval = 50 // ms
+        this._enabled = true
     }
-  }
 
-  /** 内部：短震动 */
-  _vibrate(type) {
-    if (!this._enabled) return
-    if (!this._rateLimit()) return
+    /** 开关 */
+    get enabled() {
+        return this._enabled
+    }
 
-    try {
-      wx.vibrateShort({ type })
-      this._lastVibrateTime = Date.now()
-    } catch (e) {
-      // 降级：某些设备不支持 type 参数
-      try {
-        wx.vibrateShort()
+    set enabled(val) {
+        this._enabled = val
+    }
+
+    toggle() {
+        this._enabled = !this._enabled
+        return this._enabled
+    }
+
+    /**
+     * 轻震动 — 对应 light
+     * 用于：绿色按钮按压、归零按钮按压、拉带第1格
+     */
+    light() {
+        this._vibrate('light')
+    }
+
+    /**
+     * 中震动 — 对应 medium
+     * 用于：滚轮刻度、拉带第2格
+     */
+    medium() {
+        this._vibrate('medium')
+    }
+
+    /**
+     * 重震动 — 对应 heavy
+     * 用于：归零触发、拉带第3/4格
+     */
+    heavy() {
+        this._vibrate('heavy')
+    }
+
+    /**
+     * 长震动 — 约 40ms
+     * 用于：归零事件、拉带弹回
+     */
+    long() {
+        if (!this._enabled) return
+        if (!this._rateLimit()) return
+
+        try {
+            wx.vibrateLong()
+            this._lastVibrateTime = Date.now()
+        } catch (e) {
+            // 不支持或权限不足，静默失败
+            console.debug('HapticEngine: vibrateLong not supported')
+        }
+    }
+
+    /**
+     * 爆发震动 — 最高频率 + 最高振幅
+     * 用于：扫雷爆炸瞬间烟花绽放
+     * 组合 vibrateLong + 3 次 heavy 短震，绕过频率限制
+     */
+    burst() {
+        if (!this._enabled) return
+
+        // 1. 长震 — 最长连续震动 (~40ms)
+        try {
+            wx.vibrateLong()
+        } catch (e) {
+            console.debug('HapticEngine: burst vibrateLong failed')
+        }
+
+        // 2. 三连 heavy 短震（30ms 间隔，绕开 _rateLimit）
+        const doHeavy = () => {
+            try {
+                wx.vibrateShort({ type: 'heavy' })
+            } catch (e) {
+                try {
+                    wx.vibrateShort()
+                } catch {}
+            }
+        }
+        doHeavy()
+        setTimeout(doHeavy, 30)
+        setTimeout(doHeavy, 60)
+
         this._lastVibrateTime = Date.now()
-      } catch {
-        console.debug('HapticEngine: vibrateShort not supported')
-      }
     }
-  }
 
-  /** 频率限制 */
-  _rateLimit() {
-    const now = Date.now()
-    if (now - this._lastVibrateTime < this._minInterval) {
-      return false
+    /** 内部：短震动 */
+    _vibrate(type) {
+        if (!this._enabled) return
+        if (!this._rateLimit()) return
+
+        try {
+            wx.vibrateShort({ type })
+            this._lastVibrateTime = Date.now()
+        } catch (e) {
+            // 降级：某些设备不支持 type 参数
+            try {
+                wx.vibrateShort()
+                this._lastVibrateTime = Date.now()
+            } catch {
+                console.debug('HapticEngine: vibrateShort not supported')
+            }
+        }
     }
-    return true
-  }
+
+    /** 频率限制 */
+    _rateLimit() {
+        const now = Date.now()
+        if (now - this._lastVibrateTime < this._minInterval) {
+            return false
+        }
+        return true
+    }
 }
 
 // 单例导出

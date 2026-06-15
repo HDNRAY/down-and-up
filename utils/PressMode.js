@@ -50,7 +50,7 @@ export class PressMode {
                 this.exploded = true
                 this.explodeTimer = 0
                 this._spawnParticles()
-                if (this.haptic) this.haptic.heavy()
+                if (this.haptic) this.haptic.burst()
                 if (this.onCountChange) this.onCountChange(1)
             }
         } else {
