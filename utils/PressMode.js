@@ -59,7 +59,16 @@ export class PressMode {
 
         this._vibeByDistance(d)
 
-        if (this.exploded) this.explodeTimer += dt
+        if (this.exploded) {
+            this.explodeTimer += dt
+            // 爆炸动画结束后自动重置雷点（手指不抬起继续玩）
+            if (this.explodeTimer > 0.8) {
+                this.exploded = false
+                this.particles = []
+                this.proximityMs = 0
+                this._setMine()
+            }
+        }
     }
 
     _vibeByDistance(d) {

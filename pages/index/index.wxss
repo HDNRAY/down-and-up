@@ -40,9 +40,9 @@
     background: #111111;
     border-radius: 20rpx;
     margin: 0 0 20rpx;
-    padding: 18rpx 16rpx 14rpx;
+    padding: 24rpx 16rpx 8rpx;
     overflow: hidden;
-    height: 180rpx;
+    height: 202rpx;
     box-sizing: border-box;
     flex-shrink: 0;
     box-shadow:
@@ -52,7 +52,7 @@
 }
 
 .digit-slot {
-    height: 140rpx;
+    height: 162rpx;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -68,10 +68,10 @@
 }
 
 .digit-char {
-    height: 140rpx;
-    line-height: 140rpx;
+    height: 162rpx;
+    line-height: 162rpx;
     font-family: 'Courier New', 'Menlo', monospace;
-    font-size: 152rpx;
+    font-size: 180rpx;
     font-weight: bold;
     color: #f0e8d8;
     text-align: center;
