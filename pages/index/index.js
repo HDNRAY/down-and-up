@@ -15,7 +15,7 @@ app.hapticEngine = hapticEngine
 
 const MODE_LIST = [
     { id: 'pull', label: 'PULL' },
-    { id: 'scroll', label: 'SCROLL' },
+    // { id: 'scroll', label: 'SCROLL' },
     { id: 'press', label: 'PRESS' },
     { id: 'bounce', label: 'BOUNCE' },
 ]
@@ -56,7 +56,7 @@ Page({
         })
 
         this.count = 0
-        this.modeCounts = { pull: 0, scroll: 0, press: 0 }
+        this.modeCounts = { pull: 0, scroll: 0, press: 0, bounce: 0 }
         this.modeInstances = {}
         this._loopCancelled = false
         this._pageWidth = 0
@@ -257,7 +257,7 @@ Page({
     _onCountChange(delta) {
         this.count += delta
         this.modeCounts[this.data.currentMode] += delta
-        statsStorage.record(delta, this.data.currentMode, this.count, this.modeCounts)
+        statsStorage.record(this.data.currentMode)
         this._updateDigitSlots(this.count)
     },
 
@@ -273,13 +273,12 @@ Page({
      * ======================================== */
 
     onReset() {
-        statsStorage.recordReset(this.count)
+        statsStorage.record('reset')
         this.count = 0
-        this.modeCounts = { pull: 0, scroll: 0, press: 0 }
+        this.modeCounts = { pull: 0, scroll: 0, press: 0, bounce: 0 }
         this._updateDigitSlots(0)
         const inst = this.modeInstances[this.data.currentMode]
         if (inst) inst.reset()
-        statsStorage.resetToday()
         audioEngine.play('resetSand')
         hapticEngine.heavy()
     },

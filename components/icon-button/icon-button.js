@@ -42,7 +42,7 @@ Component({
 
         onTouchEnd() {
             this.setData({ pressed: false })
-            this.triggerEvent('tap')
+            // 不手动 triggerEvent('tap')——WeChat 会自动从 touch 序列生成 tap 事件
         },
     },
 })

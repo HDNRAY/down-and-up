@@ -1,4 +1,4 @@
-<!-- 统计页面 — 数据展示，无 Canvas 图表 -->
+<!-- 统计页面 — 3 Panel：大数字 / 河流图 / 数据特点 -->
 <view class="stats-page">
   
   <!-- ── 顶部导航 ── -->
@@ -10,59 +10,57 @@
     <view class="stats-header-spacer"></view>
   </view>
 
+  <!-- ════════════════════════════════════
+       PANEL 1 — 大数字
+       ════════════════════════════════════ -->
+
   <!-- ── 今日总计数 ── -->
   <view class="stats-total">
-    <text class="stats-total-number">{{ totalDisplay }}</text>
+    <text class="stats-total-number">{{ todayTotal }}</text>
     <text class="stats-total-label">今日总计</text>
   </view>
 
   <!-- ── 4 格模式卡片 ── -->
   <view class="stats-cards">
     <view class="stats-card" wx:for="{{ modeCards }}" wx:key="id">
-      <text class="card-label">{{ item.label }}</text>
+      <text class="card-label" style="color: {{ item.color }}">{{ item.label }}</text>
       <text class="card-value">{{ item.value }}</text>
     </view>
   </view>
 
-  <!-- ── 今日明细 ── -->
-  <view class="stats-section">
-    <text class="stats-section-title">今日明细</text>
-    <scroll-view class="stats-log" scroll-y enhanced>
-      <view wx:if="{{ logs.length === 0 }}" class="stats-log-empty">暂无记录</view>
-      <view class="log-row" wx:for="{{ logs }}" wx:key="timestamp" wx:for-item="log">
-        <text class="log-time">{{ log.time }}</text>
-        <text class="log-mode log-mode--{{ log.mode }}">{{ log.mode }}</text>
-        <text class="log-delta {{ log.delta > 0 ? 'log-delta--pos' : 'log-delta--neg' }}">{{ log.delta > 0 ? '+' + log.delta : log.delta }}</text>
-      </view>
-    </scroll-view>
+  <!-- ── 本周 / 本月 / 今年 — 仅总计 ── -->
+  <view class="stats-period">
+    <view class="period-header">
+      <text class="period-label"></text>
+      <text class="period-head" wx:for="{{ periodLabels }}" wx:key="*this">{{ item }}</text>
+    </view>
+    <view class="period-row">
+      <text class="period-mode" style="color: #ffe0a0">总计</text>
+      <text class="period-val" wx:for="{{ periodData }}" wx:key="*this">{{ item.total }}</text>
+    </view>
   </view>
 
-  <!-- ── 历史数据 ── -->
-  <view class="stats-section">
-    <view class="stats-section-header">
-      <text class="stats-section-title">历史</text>
-      <view class="history-tabs">
-        <text class="history-tab {{ historyDays === 7 ? 'history-tab--active' : '' }}" data-days="7" bindtap="onHistoryTab">7天</text>
-        <text class="history-tab {{ historyDays === 30 ? 'history-tab--active' : '' }}" data-days="30" bindtap="onHistoryTab">30天</text>
+  <!-- ════════════════════════════════════
+       PANEL 2 — 主题河流图
+       ════════════════════════════════════ -->
+  <view class="stats-river-section">
+    <text class="stats-section-title">活动河流</text>
+    <canvas id="river-canvas" class="stats-river-canvas" type="2d"></canvas>
+  </view>
+
+  <!-- ════════════════════════════════════
+       PANEL 3 — 数据特点
+       ════════════════════════════════════ -->
+  <view class="stats-insights">
+    <text class="stats-section-title">数据特点</text>
+    <view wx:if="{{ insights.length === 0 }}" class="insights-empty">数据还不够，多用用就有了</view>
+    <view class="insight-card" wx:for="{{ insights }}" wx:key="id" wx:for-item="insight">
+      <text class="insight-icon">{{ insight.icon }}</text>
+      <view class="insight-body">
+        <text class="insight-title">{{ insight.title }}</text>
+        <text class="insight-desc">{{ insight.desc }}</text>
       </view>
-    </view>
-    <view class="history-table">
-      <view class="history-row history-row--header">
-        <text class="history-col history-col--date">日期</text>
-        <text class="history-col history-col--num">总</text>
-        <text class="history-col history-col--num">press</text>
-        <text class="history-col history-col--num">scroll</text>
-        <text class="history-col history-col--num">pull</text>
-      </view>
-      <scroll-view scroll-y enhanced class="history-scroll">
-        <view class="history-row" wx:for="{{ history }}" wx:key="date">
-          <text class="history-col history-col--date">{{ item.shortDate }}</text>
-          <text class="history-col history-col--num">{{ item.total }}</text>
-          <text class="history-col history-col--num">{{ item.press }}</text>
-          <text class="history-col history-col--num">{{ item.scroll }}</text>
-          <text class="history-col history-col--num">{{ item.pull }}</text>
-        </view>
-      </scroll-view>
+      <text class="insight-badge">{{ insight.score }}</text>
     </view>
   </view>
 

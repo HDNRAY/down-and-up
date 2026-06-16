@@ -45,11 +45,15 @@
     width: 64rpx;
 }
 
+/* ══════════════════════════════════════
+   PANEL 1 — 大数字
+   ══════════════════════════════════════ */
+
 /* ── 今日总计数 ── */
 .stats-total {
     width: 100%;
     text-align: center;
-    padding: 40rpx 0 32rpx;
+    padding: 40rpx 0 24rpx;
 }
 
 .stats-total-number {
@@ -74,7 +78,7 @@
     flex-direction: row;
     justify-content: space-between;
     gap: 16rpx;
-    margin-bottom: 40rpx;
+    margin-bottom: 32rpx;
 }
 
 .stats-card {
@@ -90,152 +94,164 @@
 
 .card-label {
     font-size: 22rpx;
-    color: rgba(234, 234, 234, 0.35);
-    letter-spacing: 1rpx;
-    margin-bottom: 36rpx;
+    letter-spacing: 2rpx;
+    font-weight: bold;
+    margin-bottom: 12rpx;
 }
 
-.stats-section-header {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16rpx;
+.card-value {
+    font-size: 36rpx;
+    color: #eaeaea;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
 }
 
-.stats-section-title {
-    font-size: 26rpx;
-    color: rgba(234, 234, 234, 0.5);
-    letter-spacing: 4rpx;
-    margin-bottom: 16rpx;
-}
-
-/* ── 今日明细列表 ── */
-.stats-log {
+/* ── 本周 / 本月 / 今年 ── */
+.stats-period {
     width: 100%;
-    max-height: 360rpx;
     background: rgba(255, 255, 255, 0.03);
     border-radius: 16rpx;
-    padding: 8rpx 0;
+    padding: 16rpx 20rpx;
+    margin-bottom: 32rpx;
+    box-sizing: border-box;
 }
 
-.stats-log-empty {
+.period-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding-bottom: 12rpx;
+    border-bottom: 1rpx solid rgba(255, 255, 255, 0.06);
+}
+
+.period-label {
+    flex: 1;
+}
+
+.period-head {
+    flex: 1;
+    text-align: right;
+    font-size: 22rpx;
+    color: rgba(234, 234, 234, 0.35);
+    letter-spacing: 2rpx;
+}
+
+.period-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 14rpx 0;
+    border-bottom: 1rpx solid rgba(255, 255, 255, 0.04);
+}
+
+.period-row:last-child {
+    border-bottom: none;
+}
+
+.period-mode {
+    flex: 1;
+    font-size: 24rpx;
+    font-weight: bold;
+    letter-spacing: 2rpx;
+}
+
+.period-val {
+    flex: 1;
+    text-align: right;
+    font-size: 24rpx;
+    color: rgba(234, 234, 234, 0.75);
+    font-family: 'Courier New', monospace;
+}
+
+/* ══════════════════════════════════════
+   PANEL 2 — 主题河流图
+   ══════════════════════════════════════ */
+
+.stats-river-section {
+    width: 100%;
+    margin-bottom: 32rpx;
+}
+
+.stats-river-canvas {
+    width: 100%;
+    height: 300rpx;
+    border-radius: 16rpx;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* ══════════════════════════════════════
+   PANEL 3 — 数据特点
+   ══════════════════════════════════════ */
+
+.stats-insights {
+    width: 100%;
+}
+
+.insight-card {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 16rpx;
+    padding: 24rpx;
+    margin-bottom: 14rpx;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 16rpx;
+    box-sizing: border-box;
+}
+
+.insight-icon {
+    font-size: 40rpx;
+    flex-shrink: 0;
+    margin-top: 2rpx;
+}
+
+.insight-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.insight-title {
+    font-size: 26rpx;
+    color: #eaeaea;
+    font-weight: bold;
+    margin-bottom: 6rpx;
+    letter-spacing: 1rpx;
+}
+
+.insight-desc {
+    font-size: 22rpx;
+    color: rgba(234, 234, 234, 0.5);
+    line-height: 1.5;
+}
+
+.insight-badge {
+    flex-shrink: 0;
+    background: rgba(255, 224, 160, 0.15);
+    color: #ffe0a0;
+    font-size: 20rpx;
+    padding: 4rpx 12rpx;
+    border-radius: 8rpx;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    margin-top: 2rpx;
+}
+
+.insights-empty {
+    width: 100%;
     text-align: center;
-    padding: 40rpx 0;
+    padding: 48rpx 0;
     font-size: 24rpx;
     color: rgba(234, 234, 234, 0.2);
 }
 
-.log-row {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    padding: 12rpx 24rpx;
-    gap: 16rpx;
-}
-
-.log-time {
-    font-size: 22rpx;
-    color: rgba(234, 234, 234, 0.3);
-    font-family: 'Courier New', monospace;
-    min-width: 120rpx;
-}
-
-.log-mode {
-    font-size: 26rpx;
-    min-width: 40rpx;
-    text-align: center;
-}
-
-.log-mode--press {
-    color: #4caf50;
-}
-.log-mode--scroll {
-    color: #78909c;
-}
-.log-mode--pull {
-    color: #ffc107;
-}
-.log-mode--reset {
-    color: #ff7043;
-}
-
-.log-delta {
-    font-size: 24rpx;
-    font-family: 'Courier New', monospace;
-    font-weight: bold;
-    margin-left: auto;
-}
-
-.log-delta--pos {
-    color: #81c784;
-}
-.log-delta--neg {
-    color: #ff7043;
-}
-
-/* ── 历史 Tabs ── */
-.history-tabs {
-    display: flex;
-    flex-direction: row;
-    gap: 12rpx;
-}
-
-.history-tab {
-    font-size: 24rpx;
-    color: rgba(234, 234, 234, 0.3);
-    padding: 4rpx 16rpx;
-    border-radius: 8rpx;
-    background: rgba(255, 255, 255, 0.04);
-}
-
-.history-tab--active {
-    color: #eaeaea;
-    background: rgba(255, 255, 255, 0.1);
-}
-
-/* ── 历史表格 ── */
-.history-table {
+/* ── 通用 section 标题 ── */
+.stats-section-title {
     width: 100%;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 16rpx;
-    overflow: hidden;
-}
-
-.history-scroll {
-    max-height: 480rpx;
-}
-
-.history-row {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    padding: 14rpx 24rpx;
-    border-bottom: 1rpx solid rgba(255, 255, 255, 0.04);
-}
-
-.history-row--header {
-    border-bottom: 1rpx solid rgba(255, 255, 255, 0.08);
-}
-
-.history-row:last-child {
-    border-bottom: none;
-}
-
-.history-col {
-    font-size: 22rpx;
-    font-family: 'Courier New', monospace;
-}
-
-.history-col--date {
-    flex: 2;
-    color: rgba(234, 234, 234, 0.4);
-}
-
-.history-col--num {
-    flex: 1;
-    text-align: right;
-    color: rgba(234, 234, 234, 0.7);
+    font-size: 26rpx;
+    color: rgba(234, 234, 234, 0.45);
+    letter-spacing: 4rpx;
+    margin-bottom: 16rpx;
 }
 
 .history-row--header .history-col {

@@ -14,6 +14,8 @@ const LOG_KEY = 'counter_log'
 const MAX_DAYS = 30
 const MAX_LOG = 2000
 
+const EMPTY_DAY = { total: 0, press: 0, scroll: 0, pull: 0, bounce: 0, reset: 0 }
+
 class StatsStorage {
     constructor() {
         this._today = this._getTodayStr()
@@ -39,27 +41,25 @@ class StatsStorage {
 
     /**
     /**
-     * 记录计数事件（含详细日志）
-     * @param {number} delta - 本次增量
-     * @param {string} mode - 'press' | 'scroll' | 'pull'
-     * @param {number} total - 当前总计数
-     * @param {object} modeCounts - { press, scroll, pull }
+     * 记录计数事件（每次 +1）
+     * storage 独立累计，与外部计数解耦
+     * @param {string} mode - 'press' | 'pull' | 'bounce'
      */
-    record(delta, mode, total, modeCounts) {
-        // 更新日统计
+    record(mode) {
+        // 更新日统计（累计）
         try {
             const key = this._todayKey()
             let data = wx.getStorageSync(key)
 
             if (!data || typeof data !== 'object') {
-                data = { total: 0, press: 0, scroll: 0, pull: 0 }
+                data = { ...EMPTY_DAY }
                 this._addToIndex(this._today)
             }
 
-            if (total > data.total) data.total = total
-            if (modeCounts.press > data.press) data.press = modeCounts.press
-            if (modeCounts.scroll > data.scroll) data.scroll = modeCounts.scroll
-            if (modeCounts.pull > data.pull) data.pull = modeCounts.pull
+            // 归零不计入 total（只记 reset 次数），其余模式计入 total
+            if (mode !== 'reset') data.total++
+            if (data[mode] === undefined) data[mode] = 0
+            data[mode]++
 
             wx.setStorageSync(key, data)
             this._todayData = data
@@ -67,7 +67,7 @@ class StatsStorage {
             console.warn('StatsStorage: write error', e)
         }
 
-        // 写入详细日志
+        // 写入日志（精简：只记时间+模式）
         try {
             const now = new Date()
             const pad2 = (n) => String(n).padStart(2, '0')
@@ -76,8 +76,6 @@ class StatsStorage {
                 date: this._getTodayStr(),
                 time: `${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`,
                 mode,
-                delta,
-                total,
             }
 
             let log = []
@@ -93,62 +91,26 @@ class StatsStorage {
         }
     }
 
-    /**
-     * 记录归零事件到日志
-     * @param {number} clearedCount - 归零前总计数
+    /** 归零只是普通 mode，通过 record('reset') 记录，无需独立方法 */
+
+    /** 获取今日数据
+     * @param {boolean} forceRefresh - 强制从存储读取（默认 false）
      */
-    recordReset(clearedCount) {
+    getToday(forceRefresh) {
+        if (this._todayData && !forceRefresh) return this._todayData
         try {
-            const now = new Date()
-            const pad2 = (n) => String(n).padStart(2, '0')
-            const entry = {
-                timestamp: now.getTime(),
-                date: this._getTodayStr(),
-                time: `${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`,
-                mode: 'reset',
-                delta: -clearedCount,
-                total: 0,
-            }
-            let log = []
-            try {
-                log = wx.getStorageSync(LOG_KEY) || []
-            } catch {}
-            if (!Array.isArray(log)) log = []
-            log.push(entry)
-            if (log.length > MAX_LOG) log = log.slice(-MAX_LOG)
-            wx.setStorageSync(LOG_KEY, log)
-        } catch (e) {
-            console.warn('StatsStorage: recordReset error', e)
-        }
-    }
-
-    /** 今日归零（重置今日数据） */
-    resetToday() {
-        try {
-            const data = { total: 0, press: 0, scroll: 0, pull: 0 }
-            wx.setStorageSync(this._todayKey(), data)
-            this._todayData = data
-        } catch (e) {
-            console.warn('StatsStorage: reset error', e)
-        }
-    }
-
-    /** 获取今日数据 */
-    getToday() {
-        if (this._todayData) return this._todayData
-        try {
-            const data = wx.getStorageSync(this._todayKey())
-            this._todayData = data || { total: 0, press: 0, scroll: 0, pull: 0 }
+            const raw = wx.getStorageSync(this._todayKey())
+            this._todayData = raw ? { ...EMPTY_DAY, ...raw } : { ...EMPTY_DAY }
             return this._todayData
         } catch {
-            return { total: 0, press: 0, scroll: 0, pull: 0 }
+            return { ...EMPTY_DAY }
         }
     }
 
     /**
      * 获取历史数据
-     * @param {number} days - 最近 N 天（7 或 30）
-     * @returns {Array<{ date, total, press, scroll, pull }>}
+     * @param {number} days - 最近 N 天
+     * @returns {Array<{ date, total, press, scroll, pull, bounce }>}
      */
     getHistory(days = 7) {
         const result = []
@@ -162,11 +124,11 @@ class StatsStorage {
             const day = String(d.getDate()).padStart(2, '0')
             const dateStr = `${y}-${m}-${day}`
 
-            let data = { total: 0, press: 0, scroll: 0, pull: 0 }
+            let data = { ...EMPTY_DAY }
             try {
                 const stored = wx.getStorageSync(this._dateKey(dateStr))
                 if (stored && typeof stored === 'object') {
-                    data = stored
+                    data = { ...data, ...stored }
                 }
             } catch {}
 
@@ -193,6 +155,52 @@ class StatsStorage {
         } catch {
             return []
         }
+    }
+
+    /**
+     * 获取全部日志
+     * @returns {Array}
+     */
+    getAllLogs() {
+        try {
+            const log = wx.getStorageSync(LOG_KEY) || []
+            return Array.isArray(log) ? log : []
+        } catch {
+            return []
+        }
+    }
+
+    /**
+     * 按小时桶统计（从第一条记录至今，每小时各模式计数）
+     * @returns {Object|null} { buckets: Array<{ hour, press, pull, bounce, reset }>, startTime: number, hourCount: number }
+     */
+    getHourlyBuckets() {
+        const logs = this.getAllLogs()
+        if (logs.length === 0) return null
+
+        // 按时间排序
+        logs.sort((a, b) => a.timestamp - b.timestamp)
+
+        const firstTs = logs[0].timestamp
+        const now = Date.now()
+        const totalHours = Math.max(1, Math.ceil((now - firstTs) / 3600000) + 1)
+
+        const buckets = []
+        for (let i = 0; i < totalHours; i++) {
+            buckets.push({ hour: i, press: 0, pull: 0, bounce: 0, reset: 0 })
+        }
+
+        for (const log of logs) {
+            const hourOffset = Math.floor((log.timestamp - firstTs) / 3600000)
+            if (hourOffset >= 0 && hourOffset < totalHours) {
+                const mode = log.mode
+                if (buckets[hourOffset][mode] !== undefined) {
+                    buckets[hourOffset][mode]++
+                }
+            }
+        }
+
+        return { buckets, startTime: firstTs, hourCount: totalHours }
     }
 
     /** 添加到日期索引 */
