@@ -1,6 +1,6 @@
 {
-  "navigationStyle": "custom",
-  "usingComponents": {
-    "reset-button": "../../components/reset-button/reset-button"
-  }
+    "navigationStyle": "custom",
+    "usingComponents": {
+        "icon-button": "../../components/icon-button/icon-button"
+    }
 }

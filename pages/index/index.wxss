@@ -88,32 +88,10 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    padding: 0 4rpx;
+    padding: 0;
     margin-bottom: 20rpx;
-    height: 64rpx;
+    height: 88rpx;
     flex-shrink: 0;
-}
-
-.action-btn {
-    width: 64rpx;
-    height: 64rpx;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-.action-btn--stats {
-    background-color: rgba(0, 0, 0, 0.35);
-    box-shadow:
-        inset 0 1rpx 4rpx rgba(0, 0, 0, 0.6),
-        0 1rpx 0 rgba(255, 255, 255, 0.06);
-}
-
-.stats-icon-canvas {
-    width: 36rpx;
-    height: 36rpx;
 }
 
 /* ─── 模式交互区 ─── */

@@ -16,12 +16,8 @@
 
     <!-- ── 数字下方：归零（左）+ 统计（右）── -->
     <view class="counter-actions">
-      <view class="action-btn action-btn--reset">
-        <reset-button id="reset-btn" bind:reset="onReset"></reset-button>
-      </view>
-      <view class="action-btn action-btn--stats" bindtap="onStatsTap">
-        <canvas type="2d" id="stats-icon-canvas" class="stats-icon-canvas"></canvas>
-      </view>
+      <icon-button icon="reset" bg-color="rgba(245,20,20,0.8)" bindtap="onReset"></icon-button>
+      <icon-button icon="stats" bg-color="rgba(0,0,0,0.35)" bindtap="onStatsTap"></icon-button>
     </view>
 
     <!-- ── 模式交互区 ── -->

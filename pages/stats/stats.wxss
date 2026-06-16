@@ -1,100 +1,244 @@
-/* 统计页面样式 */
+/* 统计页面样式 — 暗色底 + 琥珀色文字，与主页面统一 */
 .stats-page {
-  width: 100vw;
-  min-height: 100vh;
-  background-color: var(--bg-primary);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 80rpx 40rpx 40rpx;
+    width: 100vw;
+    min-height: 100vh;
+    background-color: #1a1a2e;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 80rpx 32rpx 48rpx;
+    box-sizing: border-box;
 }
 
+/* ── 顶部导航 ── */
 .stats-header {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 80rpx;
-  flex-shrink: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 80rpx;
+    flex-shrink: 0;
+    margin-bottom: 20rpx;
 }
 
 .stats-back {
-  width: 48rpx;
-  height: 48rpx;
-  opacity: 0.6;
+    width: 64rpx;
+    height: 64rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.back-canvas {
-  width: 48rpx;
-  height: 48rpx;
+.back-arrow {
+    font-size: 40rpx;
+    color: rgba(234, 234, 234, 0.6);
+    line-height: 1;
 }
 
+.stats-header-title {
+    font-size: 32rpx;
+    color: rgba(234, 234, 234, 0.5);
+    letter-spacing: 4rpx;
+}
+
+.stats-header-spacer {
+    width: 64rpx;
+}
+
+/* ── 今日总计数 ── */
 .stats-total {
-  width: 100%;
-  text-align: center;
-  padding: 30rpx 0;
+    width: 100%;
+    text-align: center;
+    padding: 40rpx 0 32rpx;
 }
 
 .stats-total-number {
-  font-family: var(--font-display);
-  font-size: 72rpx;
-  font-weight: bold;
-  color: var(--text-primary);
-  letter-spacing: 2rpx;
+    font-size: 100rpx;
+    font-weight: bold;
+    color: #ffe0a0;
+    letter-spacing: 4rpx;
+    line-height: 1.1;
 }
 
-.stats-rings {
-  display: flex;
-  justify-content: center;
-  gap: 40rpx;
-  width: 100%;
-  padding: 30rpx 0;
+.stats-total-label {
+    font-size: 24rpx;
+    color: rgba(255, 224, 160, 0.4);
+    margin-top: 8rpx;
+    letter-spacing: 6rpx;
 }
 
-.ring-item {
-  width: 140rpx;
-  height: 160rpx;
+/* ── 4 格模式卡片 ── */
+.stats-cards {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 16rpx;
+    margin-bottom: 40rpx;
 }
 
-.ring-canvas {
-  width: 140rpx;
-  height: 140rpx;
+.stats-card {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 16rpx;
+    padding: 20rpx 8rpx;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6rpx;
 }
 
-.stats-heatmap {
-  width: 100%;
-  padding: 20rpx 0;
+.card-label {
+    font-size: 22rpx;
+    color: rgba(234, 234, 234, 0.35);
+    letter-spacing: 1rpx;
+    margin-bottom: 36rpx;
 }
 
-.heatmap-canvas {
-  width: 100%;
-  height: 260rpx;
+.stats-section-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16rpx;
 }
 
-.stats-trend {
-  width: 100%;
-  padding: 20rpx 0;
+.stats-section-title {
+    font-size: 26rpx;
+    color: rgba(234, 234, 234, 0.5);
+    letter-spacing: 4rpx;
+    margin-bottom: 16rpx;
 }
 
-.trend-tabs {
-  display: flex;
-  justify-content: center;
-  gap: 24rpx;
-  margin-bottom: 16rpx;
+/* ── 今日明细列表 ── */
+.stats-log {
+    width: 100%;
+    max-height: 360rpx;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 16rpx;
+    padding: 8rpx 0;
 }
 
-.trend-tab {
-  width: 80rpx;
-  height: 8rpx;
-  border-radius: 4rpx;
-  background-color: var(--mode-off);
+.stats-log-empty {
+    text-align: center;
+    padding: 40rpx 0;
+    font-size: 24rpx;
+    color: rgba(234, 234, 234, 0.2);
 }
 
-.trend-tab--active {
-  background-color: var(--mode-on);
+.log-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 12rpx 24rpx;
+    gap: 16rpx;
 }
 
-.trend-canvas {
-  width: 100%;
-  height: 240rpx;
+.log-time {
+    font-size: 22rpx;
+    color: rgba(234, 234, 234, 0.3);
+    font-family: 'Courier New', monospace;
+    min-width: 120rpx;
+}
+
+.log-mode {
+    font-size: 26rpx;
+    min-width: 40rpx;
+    text-align: center;
+}
+
+.log-mode--press {
+    color: #4caf50;
+}
+.log-mode--scroll {
+    color: #78909c;
+}
+.log-mode--pull {
+    color: #ffc107;
+}
+.log-mode--reset {
+    color: #ff7043;
+}
+
+.log-delta {
+    font-size: 24rpx;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    margin-left: auto;
+}
+
+.log-delta--pos {
+    color: #81c784;
+}
+.log-delta--neg {
+    color: #ff7043;
+}
+
+/* ── 历史 Tabs ── */
+.history-tabs {
+    display: flex;
+    flex-direction: row;
+    gap: 12rpx;
+}
+
+.history-tab {
+    font-size: 24rpx;
+    color: rgba(234, 234, 234, 0.3);
+    padding: 4rpx 16rpx;
+    border-radius: 8rpx;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.history-tab--active {
+    color: #eaeaea;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* ── 历史表格 ── */
+.history-table {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 16rpx;
+    overflow: hidden;
+}
+
+.history-scroll {
+    max-height: 480rpx;
+}
+
+.history-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 14rpx 24rpx;
+    border-bottom: 1rpx solid rgba(255, 255, 255, 0.04);
+}
+
+.history-row--header {
+    border-bottom: 1rpx solid rgba(255, 255, 255, 0.08);
+}
+
+.history-row:last-child {
+    border-bottom: none;
+}
+
+.history-col {
+    font-size: 22rpx;
+    font-family: 'Courier New', monospace;
+}
+
+.history-col--date {
+    flex: 2;
+    color: rgba(234, 234, 234, 0.4);
+}
+
+.history-col--num {
+    flex: 1;
+    text-align: right;
+    color: rgba(234, 234, 234, 0.7);
+}
+
+.history-row--header .history-col {
+    color: rgba(234, 234, 234, 0.25);
+    font-size: 20rpx;
 }

@@ -1,0 +1,20 @@
+.icon-btn {
+    width: 88rpx;
+    height: 88rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: transform 0.1s ease;
+    box-sizing: border-box;
+}
+
+.icon-btn--pressed {
+    transform: scale(0.9);
+}
+
+.icon-svg {
+    width: 48rpx;
+    height: 48rpx;
+    display: block;
+}

@@ -1,6 +1,6 @@
 <!--
   解压计数器 - 归零按钮组件
-  数字右侧小圆形按钮，暖橙红渐变，逆时针回转箭头图标
+  圆形按钮，暗红底色 + 回转箭头，与统计按钮风格一致
   按下有弹性缩放 + 音效 + 震动反馈
 -->
 <view
@@ -9,5 +9,5 @@
   bindtouchend="onTouchEnd"
   bindtouchcancel="onTouchEnd"
 >
-  <canvas type="2d" id="reset-btn-canvas" class="reset-btn__canvas"></canvas>
+  <text class="reset-btn__icon">↺</text>
 </view>

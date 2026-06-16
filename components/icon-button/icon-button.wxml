@@ -1,0 +1,11 @@
+<!-- 通用图标按钮组件 -->
+<view
+  class="icon-btn {{ pressed ? 'icon-btn--pressed' : '' }}"
+  style="{{ computedStyle }}"
+  bindtouchstart="onTouchStart"
+  bindtouchend="onTouchEnd"
+  bindtouchcancel="onTouchEnd"
+>
+  <image wx:if="{{ icon === 'reset' }}" class="icon-svg" src="../../assets/icons/reset.svg" mode="aspectFit"></image>
+  <image wx:elif="{{ icon === 'stats' }}" class="icon-svg" src="../../assets/icons/stats.svg" mode="aspectFit"></image>
+</view>

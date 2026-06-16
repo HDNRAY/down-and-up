@@ -64,7 +64,6 @@ Page({
     },
 
     onReady() {
-        this._initStatsIconCanvas()
         this._initModeArea()
     },
 
@@ -157,44 +156,6 @@ Page({
     },
 
     /* ========================================
-     * 统计图标画布
-     * ======================================== */
-
-    _initStatsIconCanvas() {
-        wx.createSelectorQuery()
-            .select('#stats-icon-canvas')
-            .fields({ node: true, size: true })
-            .exec((res) => {
-                if (!res || !res[0]) return
-                const node = res[0].node
-                const ctx = node.getContext('2d')
-                const dpr = this.pixelRatio
-                const w = res[0].width
-                const h = res[0].height
-                node.width = w * dpr
-                node.height = h * dpr
-                ctx.scale(dpr, dpr)
-
-                ctx.clearRect(0, 0, w, h)
-                const bw = w * 0.14
-                const gap = w * 0.1
-                const baseY = h * 0.78
-                const heights = [h * 0.38, h * 0.6, h * 0.28]
-                ctx.fillStyle = 'rgba(240, 232, 216, 0.65)'
-                for (let i = 0; i < 3; i++) {
-                    const bx = w * 0.18 + i * (bw + gap)
-                    ctx.fillRect(bx, baseY - heights[i], bw, heights[i])
-                }
-                ctx.beginPath()
-                ctx.moveTo(w * 0.12, baseY)
-                ctx.lineTo(w * 0.88, baseY)
-                ctx.strokeStyle = 'rgba(240, 232, 216, 0.65)'
-                ctx.lineWidth = 1
-                ctx.stroke()
-            })
-    },
-
-    /* ========================================
      * 触摸 — canvas（模式交互）
      * ======================================== */
 
@@ -267,6 +228,7 @@ Page({
      * ======================================== */
 
     onReset() {
+        statsStorage.recordReset(this.count)
         this.count = 0
         this.modeCounts = { pull: 0, scroll: 0, press: 0 }
         this._updateDigitSlots(0)

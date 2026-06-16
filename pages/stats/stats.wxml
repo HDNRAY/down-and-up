@@ -1,37 +1,69 @@
-<!-- 统计页面 -->
+<!-- 统计页面 — 数据展示，无 Canvas 图表 -->
 <view class="stats-page">
+  
+  <!-- ── 顶部导航 ── -->
   <view class="stats-header">
     <view class="stats-back" bindtap="onBack">
-      <canvas type="2d" id="back-canvas" class="back-canvas"></canvas>
+      <text class="back-arrow">←</text>
     </view>
-    <text class="stats-title"></text>
+    <text class="stats-header-title">统计</text>
+    <view class="stats-header-spacer"></view>
   </view>
 
+  <!-- ── 今日总计数 ── -->
   <view class="stats-total">
     <text class="stats-total-number">{{ totalDisplay }}</text>
+    <text class="stats-total-label">今日总计</text>
   </view>
 
-  <view class="stats-rings">
-    <view class="ring-item">
-      <canvas type="2d" id="ring-press" class="ring-canvas"></canvas>
-    </view>
-    <view class="ring-item">
-      <canvas type="2d" id="ring-scroll" class="ring-canvas"></canvas>
-    </view>
-    <view class="ring-item">
-      <canvas type="2d" id="ring-pull" class="ring-canvas"></canvas>
+  <!-- ── 4 格模式卡片 ── -->
+  <view class="stats-cards">
+    <view class="stats-card" wx:for="{{ modeCards }}" wx:key="id">
+      <text class="card-label">{{ item.label }}</text>
+      <text class="card-value">{{ item.value }}</text>
     </view>
   </view>
 
-  <view class="stats-heatmap">
-    <canvas type="2d" id="heatmap-canvas" class="heatmap-canvas"></canvas>
+  <!-- ── 今日明细 ── -->
+  <view class="stats-section">
+    <text class="stats-section-title">今日明细</text>
+    <scroll-view class="stats-log" scroll-y enhanced>
+      <view wx:if="{{ logs.length === 0 }}" class="stats-log-empty">暂无记录</view>
+      <view class="log-row" wx:for="{{ logs }}" wx:key="timestamp" wx:for-item="log">
+        <text class="log-time">{{ log.time }}</text>
+        <text class="log-mode log-mode--{{ log.mode }}">{{ log.mode }}</text>
+        <text class="log-delta {{ log.delta > 0 ? 'log-delta--pos' : 'log-delta--neg' }}">{{ log.delta > 0 ? '+' + log.delta : log.delta }}</text>
+      </view>
+    </scroll-view>
   </view>
 
-  <view class="stats-trend">
-    <view class="trend-tabs">
-      <view class="trend-tab {{ trendDays === 7 ? 'trend-tab--active' : '' }}" data-days="7" bindtap="onTrendTabTap"></view>
-      <view class="trend-tab {{ trendDays === 30 ? 'trend-tab--active' : '' }}" data-days="30" bindtap="onTrendTabTap"></view>
+  <!-- ── 历史数据 ── -->
+  <view class="stats-section">
+    <view class="stats-section-header">
+      <text class="stats-section-title">历史</text>
+      <view class="history-tabs">
+        <text class="history-tab {{ historyDays === 7 ? 'history-tab--active' : '' }}" data-days="7" bindtap="onHistoryTab">7天</text>
+        <text class="history-tab {{ historyDays === 30 ? 'history-tab--active' : '' }}" data-days="30" bindtap="onHistoryTab">30天</text>
+      </view>
     </view>
-    <canvas type="2d" id="trend-canvas" class="trend-canvas"></canvas>
+    <view class="history-table">
+      <view class="history-row history-row--header">
+        <text class="history-col history-col--date">日期</text>
+        <text class="history-col history-col--num">总</text>
+        <text class="history-col history-col--num">press</text>
+        <text class="history-col history-col--num">scroll</text>
+        <text class="history-col history-col--num">pull</text>
+      </view>
+      <scroll-view scroll-y enhanced class="history-scroll">
+        <view class="history-row" wx:for="{{ history }}" wx:key="date">
+          <text class="history-col history-col--date">{{ item.shortDate }}</text>
+          <text class="history-col history-col--num">{{ item.total }}</text>
+          <text class="history-col history-col--num">{{ item.press }}</text>
+          <text class="history-col history-col--num">{{ item.scroll }}</text>
+          <text class="history-col history-col--num">{{ item.pull }}</text>
+        </view>
+      </scroll-view>
+    </view>
   </view>
+
 </view>

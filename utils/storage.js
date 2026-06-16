@@ -93,6 +93,35 @@ class StatsStorage {
         }
     }
 
+    /**
+     * 记录归零事件到日志
+     * @param {number} clearedCount - 归零前总计数
+     */
+    recordReset(clearedCount) {
+        try {
+            const now = new Date()
+            const pad2 = (n) => String(n).padStart(2, '0')
+            const entry = {
+                timestamp: now.getTime(),
+                date: this._getTodayStr(),
+                time: `${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`,
+                mode: 'reset',
+                delta: -clearedCount,
+                total: 0,
+            }
+            let log = []
+            try {
+                log = wx.getStorageSync(LOG_KEY) || []
+            } catch {}
+            if (!Array.isArray(log)) log = []
+            log.push(entry)
+            if (log.length > MAX_LOG) log = log.slice(-MAX_LOG)
+            wx.setStorageSync(LOG_KEY, log)
+        } catch (e) {
+            console.warn('StatsStorage: recordReset error', e)
+        }
+    }
+
     /** 今日归零（重置今日数据） */
     resetToday() {
         try {

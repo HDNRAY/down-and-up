@@ -45,8 +45,9 @@ export class ScrollMode {
         this.wheelCy = this.height / 2
         this.wheelW = this.width * 0.4
         this.wheelH = this.height * 0.72
-        // 动态刻度间距 = 视觉间距，保证计数与渲染一致
-        this._tickSpacing = (this.wheelH * 0.75) / this.TICK_COUNT
+        // 刻度间距 = 基础间距 + 组宽增量（保持吸附点间隙不变）
+        const baseSpacing = (this.wheelH * 0.75) / this.TICK_COUNT
+        this._tickSpacing = baseSpacing + 16
         // 对齐偏移：刻度经过三角指针时计数
         const startY = this.wheelCy - this.wheelH * 0.375
         const tickCenterY = startY + 2 * this._tickSpacing
@@ -126,29 +127,34 @@ export class ScrollMode {
         }
         ctx.restore()
 
-        // 刻度群（长短相间）：每根刻度独立计算进出视野
-        // 4 个吸附点，4 段摩擦刻度
-        const startY = ry + hh * 0.125
-
+        // 刻度群 — clip 到滚轮形状，超出部分不可见
         ctx.save()
-        const LINE_COUNT = 11 // 每组 11 条线（增加约 22%）
+        ctx.beginPath()
+        this._roundRect(ctx, rx, ry, hw, hh, radius)
+        ctx.clip()
+
+        const startY = ry + hh * 0.125
+        const rangeH = hh * 0.75
+
+        const LINE_COUNT = 15
         const lineSpacing = 4
         const halfLines = (LINE_COUNT - 1) / 2
-        for (let i = -3; i <= this.TICK_COUNT + 2; i++) {
-            const visualOffset = this._scrollOffset + this._tickAlignOffset + this._tickSpacing * 0.5
-            const y = startY + ((i * this._tickSpacing + visualOffset) % (hh * 0.75))
-            let wy = ((((y - startY) % (hh * 0.75)) + hh * 0.75) % (hh * 0.75)) + startY
-            // 粗筛：中心离太远则跳过整组
-            if (wy < ry - lineSpacing * halfLines - 4 || wy > ry + hh + lineSpacing * halfLines + 4) continue
+        const groupSpan = halfLines * lineSpacing
+        const visualOffset = this._scrollOffset + this._tickAlignOffset + this._tickSpacing * 0.5
+
+        // 渲染足够多组以覆盖整个滚轮
+        const groupsNeeded = Math.ceil((hh + groupSpan * 2) / this._tickSpacing) + 2
+        const centerGroup = Math.round(-visualOffset / this._tickSpacing)
+
+        for (let i = centerGroup - groupsNeeded; i <= centerGroup + groupsNeeded; i++) {
+            const baseY = startY + i * this._tickSpacing + visualOffset
 
             for (let j = -halfLines; j <= halfLines; j++) {
-                const lineY = wy + j * lineSpacing
-                // 每根刻度独立进出视野
-                if (lineY < ry || lineY > ry + hh) continue
+                const lineY = baseY + j * lineSpacing
 
                 // 中间长，两边短
                 const lengthRatio = 0.5 + 0.5 * (1 - Math.abs(j) / (halfLines + 1))
-                const tw = hw * 0.45 * lengthRatio
+                const tw = hw * 0.58 * lengthRatio
                 if (tw < 3) continue
                 const tx1 = rx + (hw - tw) / 2
                 const tx2 = tx1 + tw
