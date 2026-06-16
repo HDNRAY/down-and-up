@@ -15,25 +15,24 @@ export class ScrollMode {
         this.haptic = config.hapticEngine
         this.onCountChange = config.onCountChange
 
-        this.TICK_COUNT = 5
+        this.TICK_COUNT = 4
         this.DETENT_THRESHOLD = 0.5
 
         this.inertia = {
             velocity: 0,
-            friction: 0.94,
+            friction: 0.7,
         }
 
-        this.snapSpring = new Spring({ stiffness: 500, damping: 28 })
+        this.snapSpring = new Spring({ stiffness: 500, damping: 24 })
         this._isSnapping = false
 
         this._scrollOffset = 0
-        this._lastTickIndex = 0
+        this._lastCountedTick = 0
 
         this._isDragging = false
         this._lastTouchY = 0
         this._touchId = null
-
-        this._tickPulse = 0
+        this._lastVibeTime = 0
 
         // 动态计算（每帧 _calcLayout 更新）
         this._tickSpacing = 60
@@ -64,14 +63,15 @@ export class ScrollMode {
 
         if (this._isSnapping) {
             this.snapSpring.update(sd)
+            const prevOffset = this._scrollOffset
             this._scrollOffset = this.snapSpring.value
+            // 回弹过程中也检查计数
+            const snapDelta = this._scrollOffset - prevOffset
+            if (snapDelta > 0.5) this._checkTickCrossing(snapDelta)
             if (this.snapSpring.isAtRest) {
                 this._scrollOffset = this._nearestTick(this._scrollOffset)
+                this._lastCountedTick = Math.floor(this._scrollOffset / this._tickSpacing)
                 this._isSnapping = false
-            }
-            if (this._tickPulse > 0) {
-                this._tickPulse *= Math.pow(0.8, sd * 60)
-                if (this._tickPulse < 0.01) this._tickPulse = 0
             }
             return
         }
@@ -84,12 +84,6 @@ export class ScrollMode {
                 this._scrollOffset += delta
                 this._checkTickCrossing(delta)
             }
-        }
-
-        // 脉冲衰减
-        if (this._tickPulse > 0) {
-            this._tickPulse *= Math.pow(0.8, sd * 60)
-            if (this._tickPulse < 0.01) this._tickPulse = 0
         }
     }
 
@@ -120,55 +114,76 @@ export class ScrollMode {
         grad.addColorStop(1, '#2A2A2A')
         ctx.fillStyle = grad
         ctx.fillRect(rx, ry, hw, hh)
-        ctx.restore()
 
-        // 大刻度（等长）
-        const startY = ry + hh * 0.125
-
-        ctx.save()
-        for (let i = -2; i <= this.TICK_COUNT + 2; i++) {
-            const visualOffset = this._scrollOffset + this._tickAlignOffset
-            const y = startY + ((i * this._tickSpacing + visualOffset) % (hh * 0.75))
-            let wy = ((((y - startY) % (hh * 0.75)) + hh * 0.75) % (hh * 0.75)) + startY
-            if (wy < ry - this._tickSpacing || wy > ry + hh + this._tickSpacing) continue
-
-            const tw = hw * 0.45
-            const tx1 = rx + (hw - tw) / 2
-            const tx2 = tx1 + tw
-
-            ctx.strokeStyle = '#999'
-            ctx.lineWidth = 1.5
+        // 金属拉丝纹理
+        ctx.strokeStyle = 'rgba(255,255,255,0.03)'
+        ctx.lineWidth = 0.5
+        for (let x = rx; x < rx + hw; x += 3) {
             ctx.beginPath()
-            ctx.moveTo(tx1, wy)
-            ctx.lineTo(tx2, wy)
+            ctx.moveTo(x, ry)
+            ctx.lineTo(x, ry + hh)
             ctx.stroke()
         }
         ctx.restore()
 
-        // 左侧指示三角（指向滚轮）
+        // 刻度群（长短相间）：每根刻度独立计算进出视野
+        // 4 个吸附点，4 段摩擦刻度
+        const startY = ry + hh * 0.125
+
         ctx.save()
-        ctx.fillStyle = '#888'
+        const LINE_COUNT = 11 // 每组 11 条线（增加约 22%）
+        const lineSpacing = 4
+        const halfLines = (LINE_COUNT - 1) / 2
+        for (let i = -3; i <= this.TICK_COUNT + 2; i++) {
+            const visualOffset = this._scrollOffset + this._tickAlignOffset + this._tickSpacing * 0.5
+            const y = startY + ((i * this._tickSpacing + visualOffset) % (hh * 0.75))
+            let wy = ((((y - startY) % (hh * 0.75)) + hh * 0.75) % (hh * 0.75)) + startY
+            // 粗筛：中心离太远则跳过整组
+            if (wy < ry - lineSpacing * halfLines - 4 || wy > ry + hh + lineSpacing * halfLines + 4) continue
+
+            for (let j = -halfLines; j <= halfLines; j++) {
+                const lineY = wy + j * lineSpacing
+                // 每根刻度独立进出视野
+                if (lineY < ry || lineY > ry + hh) continue
+
+                // 中间长，两边短
+                const lengthRatio = 0.5 + 0.5 * (1 - Math.abs(j) / (halfLines + 1))
+                const tw = hw * 0.45 * lengthRatio
+                if (tw < 3) continue
+                const tx1 = rx + (hw - tw) / 2
+                const tx2 = tx1 + tw
+
+                ctx.strokeStyle = '#AAA'
+                ctx.lineWidth = 1.8
+                ctx.lineCap = 'round'
+                ctx.beginPath()
+                ctx.moveTo(tx1, lineY)
+                ctx.lineTo(tx2, lineY)
+                ctx.stroke()
+            }
+        }
+        ctx.restore()
+
+        // 左侧指示三角（指向滚轮 + 发光）
+        ctx.save()
+        // 外发光
+        const glowGrad = ctx.createRadialGradient(rx - 6, cy, 0, rx - 6, cy, 20)
+        glowGrad.addColorStop(0, 'rgba(200,200,200,0.15)')
+        glowGrad.addColorStop(1, 'rgba(200,200,200,0)')
+        ctx.fillStyle = glowGrad
+        ctx.beginPath()
+        ctx.arc(rx - 6, cy, 20, 0, Math.PI * 2)
+        ctx.fill()
+
+        // 三角箭头
+        ctx.fillStyle = '#AAA'
         ctx.beginPath()
         ctx.moveTo(rx - 2, cy)
-        ctx.lineTo(rx - 11, cy - 10)
-        ctx.lineTo(rx - 11, cy + 10)
+        ctx.lineTo(rx - 12, cy - 10)
+        ctx.lineTo(rx - 12, cy + 10)
         ctx.closePath()
         ctx.fill()
         ctx.restore()
-
-        // 脉冲闪光
-        if (this._tickPulse > 0.05) {
-            ctx.save()
-            ctx.globalAlpha = this._tickPulse * 0.4
-            const pg = ctx.createRadialGradient(cx, cy, 0, cx, cy, hh * 0.3)
-            pg.addColorStop(0, 'rgba(200,200,200,0.2)')
-            pg.addColorStop(1, 'rgba(200,200,200,0)')
-            ctx.fillStyle = pg
-            ctx.beginPath()
-            ctx.arc(cx, cy, hh * 0.3, 0, Math.PI * 2)
-            ctx.fill()
-            ctx.restore()
-        }
     }
 
     _roundRect(ctx, x, y, w, h, r) {
@@ -196,6 +211,8 @@ export class ScrollMode {
         this.inertia.velocity = 0
         this._isSnapping = false
         this._touchBaseOffset = this._scrollOffset
+        // 重置计数参考点 — 以刻度经过三角为准
+        this._lastCountedTick = Math.floor(this._scrollOffset / this._tickSpacing)
     }
 
     handleTouchMove(e) {
@@ -204,14 +221,62 @@ export class ScrollMode {
         if (!t) return
         const dy = t.y - this._lastTouchY
         this._lastTouchY = t.y
+
         // 渐进阻力：离起点越远，阻力越大
         const distFromStart = Math.abs(this._scrollOffset - this._touchBaseOffset)
         const tFactor = Math.min(distFromStart / (this._tickSpacing * 3), 1)
-        const resistance = 1 - tFactor * 0.4
-        const adjustedDy = dy * resistance
-        this._scrollOffset += adjustedDy
-        this.inertia.velocity += adjustedDy * 80
-        this._checkTickCrossing(dy)
+        let resistance = 1 - tFactor * 0.4
+
+        // 跨格阻力 + 过峰助推：吸附点（刻度间隔中间）阻尼最大
+        // 推过峰值后自动滑向下一格
+        const nearestDetent = this._nearestTick(this._scrollOffset)
+        const halfWay = nearestDetent + this._tickSpacing * 0.5
+        const distToMid = Math.abs(this._scrollOffset - halfWay)
+        const RESIST_ZONE = this._tickSpacing * 0.4
+        let vibeIntensity = 0
+
+        if (distToMid < RESIST_ZONE && distToMid > 0.5) {
+            const peakResist = (RESIST_ZONE - distToMid) / RESIST_ZONE
+            // 阻尼随靠近峰值递增（最多削弱 55%）
+            resistance *= 1 - peakResist * 0.55
+            vibeIntensity = peakResist
+
+            // 越过峰值后：自动推向下一格
+            if (this._scrollOffset > halfWay + 2) {
+                const assist = peakResist * this._tickSpacing * 2.5
+                this._scrollOffset += assist * 0.016
+            }
+        }
+
+        // 阻尼越大震感越强
+        if (vibeIntensity > 0.3 && this.haptic) {
+            const now = Date.now()
+            const vibeInterval = Math.max(40, 200 - vibeIntensity * 160)
+            if (!this._lastVibeTime || now - this._lastVibeTime > vibeInterval) {
+                this._lastVibeTime = now
+                if (vibeIntensity > 0.7) {
+                    this.haptic.heavy()
+                } else if (vibeIntensity > 0.5) {
+                    this.haptic.medium()
+                } else {
+                    this.haptic.light()
+                }
+            }
+        }
+
+        // 基础阻尼：手指需移动更多距离，滚轮才移动一定距离
+        const DAMPING = 0.55
+        const adjustedDy = dy * resistance * DAMPING
+
+        // 限制单帧移动量（不超过 0.8 格刻度），防止飞跳
+        const maxPerFrame = this._tickSpacing * 0.8
+        const clampedDy = Math.max(-maxPerFrame, Math.min(maxPerFrame, adjustedDy))
+
+        this._scrollOffset += clampedDy
+        this.inertia.velocity += clampedDy * 80
+        // 限制最大速度
+        this.inertia.velocity = Math.max(-300, Math.min(300, this.inertia.velocity))
+        this._checkTickCrossing(clampedDy)
     }
 
     handleTouchEnd() {
@@ -219,37 +284,29 @@ export class ScrollMode {
         this._isDragging = false
         this._touchId = null
 
-        const visualOffset = this._scrollOffset + this._tickAlignOffset
-        const tickProgress = (visualOffset % this._tickSpacing) / this._tickSpacing
-        const absProgress = Math.abs(tickProgress)
-        if (absProgress > 0.01) {
-            const dir = tickProgress > 0 ? 1 : -1
-            const target =
-                absProgress > this.DETENT_THRESHOLD
-                    ? this._nearestTick(this._scrollOffset + dir * this._tickSpacing * 0.1)
-                    : this._nearestTick(this._scrollOffset)
-            if (Math.abs(this._scrollOffset - target) > 0.5) {
-                this._isSnapping = true
-                this.snapSpring.setValue(this._scrollOffset)
-                this.snapSpring.target = target
-                this.inertia.velocity = 0
-            }
+        // 吸附到最近的 detent（刻度间隔的整数倍）
+        const nearestDetent = this._nearestTick(this._scrollOffset)
+        if (Math.abs(this._scrollOffset - nearestDetent) > 0.5) {
+            this._isSnapping = true
+            this.snapSpring.setValue(this._scrollOffset)
+            this.snapSpring.target = nearestDetent
+            this.inertia.velocity = 0
         }
     }
 
     _checkTickCrossing(delta) {
-        const visualOffset = this._scrollOffset + this._tickAlignOffset
-        const ct = Math.floor(visualOffset / this._tickSpacing)
-        const lt = this._lastTickIndex
-        if (ct !== lt) {
-            const diff = Math.abs(ct - lt)
-            if (diff > 0 && diff < 12) {
-                if (this.onCountChange) this.onCountChange(diff)
-                if (this.audio) this.audio.play('ratchet')
-                if (this.haptic) this.haptic.medium()
-                this._tickPulse = 1
-            }
-            this._lastTickIndex = ct
+        // 仅向下滚动（delta > 0）时计数
+        if (delta <= 0) return
+
+        const ct = Math.floor(this._scrollOffset / this._tickSpacing)
+
+        if (ct > this._lastCountedTick) {
+            const diff = ct - this._lastCountedTick
+            const clamped = Math.min(diff, 1)
+            if (this.onCountChange) this.onCountChange(clamped)
+            if (this.audio) this.audio.play('ratchet')
+            if (this.haptic) this.haptic.heavy()
+            this._lastCountedTick = ct
         }
     }
 
@@ -258,8 +315,7 @@ export class ScrollMode {
         this._touchId = null
         this._isSnapping = false
         this._scrollOffset = 0
-        this._lastTickIndex = 0
-        this._tickPulse = 0
+        this._lastCountedTick = 0
         this.inertia.velocity = 0
         this._touchBaseOffset = 0
     }

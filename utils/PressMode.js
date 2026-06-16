@@ -62,7 +62,7 @@ export class PressMode {
         if (this.exploded) {
             this.explodeTimer += dt
             // 爆炸动画结束后自动重置雷点（手指不抬起继续玩）
-            if (this.explodeTimer > 0.8) {
+            if (this.explodeTimer > 1.0) {
                 this.exploded = false
                 this.particles = []
                 this.proximityMs = 0
@@ -97,21 +97,86 @@ export class PressMode {
     }
 
     _spawnParticles() {
+        const count = 50 + Math.floor(Math.random() * 30) // 50-80
         const colors = ['#FF4444', '#FF8844', '#FFCC44', '#44FF44', '#4488FF', '#FF44FF', '#FFFFFF']
-        for (let i = 0; i < 35; i++) {
+        const shapes = ['circle', 'star', 'sparkle', 'line']
+        for (let i = 0; i < count; i++) {
             const angle = Math.random() * Math.PI * 2
-            const speed = 40 + Math.random() * 120
+            const speed = 80 + Math.random() * 140
             this.particles.push({
                 x: this.mineX,
                 y: this.mineY,
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
-                life: 0.6 + Math.random() * 0.8,
-                maxLife: 0.6 + Math.random() * 0.8,
+                life: 0.8 + Math.random() * 1.0,
+                maxLife: 0.8 + Math.random() * 1.0,
                 color: colors[Math.floor(Math.random() * colors.length)],
-                size: 1.5 + Math.random() * 3,
+                size: 1.5 + Math.random() * 3.5,
+                shape: shapes[Math.floor(Math.random() * shapes.length)],
             })
         }
+    }
+
+    /* ─── 按形状绘制粒子 ─── */
+    _drawParticle(ctx, p, alpha) {
+        const s = p.size * alpha
+        ctx.save()
+        ctx.globalAlpha = alpha
+        ctx.fillStyle = p.color
+        ctx.strokeStyle = p.color
+
+        switch (p.shape) {
+            case 'star': {
+                // 四角星
+                const r = s
+                ctx.beginPath()
+                for (let j = 0; j < 8; j++) {
+                    const a = (j * Math.PI) / 4 - Math.PI / 2
+                    const rad = j % 2 === 0 ? r : r * 0.35
+                    const px = p.x + Math.cos(a) * rad
+                    const py = p.y + Math.sin(a) * rad
+                    j === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py)
+                }
+                ctx.closePath()
+                ctx.fill()
+                break
+            }
+            case 'sparkle': {
+                // 十字火花
+                const len = s * 1.2
+                ctx.lineWidth = Math.max(1, s * 0.4)
+                ctx.lineCap = 'round'
+                ctx.beginPath()
+                ctx.moveTo(p.x - len, p.y)
+                ctx.lineTo(p.x + len, p.y)
+                ctx.moveTo(p.x, p.y - len)
+                ctx.lineTo(p.x, p.y + len)
+                ctx.stroke()
+                break
+            }
+            case 'line': {
+                // 拖尾线段 — 沿速度方向
+                const len = s * 2
+                const angle = Math.atan2(p.vy, p.vx)
+                ctx.lineWidth = Math.max(1, s * 0.5)
+                ctx.lineCap = 'round'
+                ctx.beginPath()
+                ctx.moveTo(p.x - Math.cos(angle) * len, p.y - Math.sin(angle) * len)
+                ctx.lineTo(p.x + Math.cos(angle) * len * 0.5, p.y + Math.sin(angle) * len * 0.5)
+                ctx.stroke()
+                break
+            }
+            case 'circle':
+            default: {
+                // 圆形（默认）
+                ctx.beginPath()
+                ctx.arc(p.x, p.y, s, 0, Math.PI * 2)
+                ctx.fill()
+                break
+            }
+        }
+
+        ctx.restore()
     }
 
     render(ctx) {
@@ -137,31 +202,27 @@ export class PressMode {
         }
         ctx.restore()
 
-        // 粒子
+        // 粒子（多样形状 + 速度衰减）
         for (const p of this.particles) {
+            p.vx *= 0.96
+            p.vy *= 0.96
             p.x += p.vx * 0.016
             p.y += p.vy * 0.016
             p.vy += 80 * 0.016
             p.life -= 0.016
             if (p.life <= 0) continue
             const alpha = Math.max(0, p.life / p.maxLife)
-            ctx.save()
-            ctx.globalAlpha = alpha
-            ctx.fillStyle = p.color
-            ctx.beginPath()
-            ctx.arc(p.x, p.y, p.size * alpha, 0, Math.PI * 2)
-            ctx.fill()
-            ctx.restore()
+            this._drawParticle(ctx, p, alpha)
         }
 
-        // 爆炸闪光
+        // 爆炸微光（仅外层浅光晕）
         if (this.exploded) {
-            const flash = Math.max(0, 1 - this.explodeTimer / 0.4)
+            const flash = Math.max(0, 1 - this.explodeTimer / 0.35)
             ctx.save()
-            ctx.globalAlpha = flash * 0.3
+            ctx.globalAlpha = flash * 0.18
             ctx.fillStyle = '#FFDD88'
             ctx.beginPath()
-            ctx.arc(this.mineX, this.mineY, 60 + (1 - flash) * 40, 0, Math.PI * 2)
+            ctx.arc(this.mineX, this.mineY, 60 + (1 - flash) * 50, 0, Math.PI * 2)
             ctx.fill()
             ctx.restore()
         }
@@ -236,15 +297,7 @@ export class PressMode {
     handleTouchEnd() {
         this.touching = false
         this.proximityMs = 0
-        // 爆炸后重置雷点
-        if (this.exploded) {
-            this.mineSet = false
-        }
-        this.mineSet = false
-        this.touching = false
-        this.exploded = false
-        this.particles = []
-        this.proximityMs = 0
+        // 烟花继续播放，抬手不消失
     }
 
     _findTouch(e) {
