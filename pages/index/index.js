@@ -4,6 +4,7 @@
 import { PressMode } from '../../utils/PressMode'
 import { ScrollMode } from '../../utils/ScrollMode'
 import { PullMode } from '../../utils/PullMode'
+import { BounceMode } from '../../utils/BounceMode'
 import audioEngine from '../../utils/audio'
 import hapticEngine from '../../utils/haptics'
 import statsStorage from '../../utils/storage'
@@ -16,6 +17,7 @@ const MODE_LIST = [
     { id: 'pull', label: 'PULL' },
     { id: 'scroll', label: 'SCROLL' },
     { id: 'press', label: 'PRESS' },
+    { id: 'bounce', label: 'BOUNCE' },
 ]
 
 Page({
@@ -69,6 +71,7 @@ Page({
 
     onUnload() {
         this._loopCancelled = true
+        this._stopBounceGyro()
         audioEngine.destroy()
     },
 
@@ -120,6 +123,7 @@ Page({
             press: new PressMode(cfg),
             scroll: new ScrollMode(cfg),
             pull: new PullMode(cfg),
+            bounce: new BounceMode(cfg),
         }
     },
 
@@ -127,6 +131,14 @@ Page({
         if (id === this._activeModeId) return
         const old = this.modeInstances[this._activeModeId]
         if (old && old.reset) old.reset()
+
+        // 陀螺仪开关
+        if (id === 'bounce') {
+            this._startBounceGyro()
+        } else {
+            this._stopBounceGyro()
+        }
+
         this._activeModeId = id
         this.setData({ currentMode: id, currentModeIndex: MODE_LIST.findIndex((m) => m.id === id) })
         audioEngine.play('modeSwitch')
@@ -196,13 +208,46 @@ Page({
         if (Math.abs(dx) > 20) {
             this._selSwiped = true
             const ci = this.data.currentModeIndex
-            const ni = (ci + (dx > 0 ? -1 : 1) + 3) % 3
+            const ni = (ci + (dx > 0 ? -1 : 1) + 4) % 4
             this._switchMode(MODE_LIST[ni].id)
         }
     },
 
     onSelectorTouchEnd() {
         this._selSwiped = false
+    },
+
+    /* ========================================
+     * 陀螺仪 — BOUNCE 模式
+     * ======================================== */
+
+    _startBounceGyro() {
+        try {
+            wx.startDeviceMotionListening({
+                interval: 'ui',
+                success: () => {
+                    this._gyroHandler = (res) => {
+                        const inst = this.modeInstances['bounce']
+                        if (inst && inst.setTilt) inst.setTilt(res.beta)
+                    }
+                    wx.onDeviceMotionChange(this._gyroHandler)
+                },
+            })
+        } catch (e) {
+            console.warn('Gyro start failed:', e)
+        }
+    },
+
+    _stopBounceGyro() {
+        try {
+            if (this._gyroHandler) {
+                wx.offDeviceMotionChange(this._gyroHandler)
+                this._gyroHandler = null
+            }
+            wx.stopDeviceMotionListening()
+        } catch (e) {
+            // 静默
+        }
     },
 
     /* ========================================
