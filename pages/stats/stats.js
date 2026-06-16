@@ -23,7 +23,7 @@ Page({
             { id: 'bounce', label: 'BOUNCE', value: '0', color: '#42A5F5' },
             { id: 'reset', label: '归零', value: '0', color: '#FF7043' },
         ],
-        periodLabels: ['本周', '本月', '今年'],
+        periodLabels: ['本周', '本月', '今年', ''],
         periodData: [],
         // Panel 3
         insights: [],
@@ -56,8 +56,8 @@ Page({
             'modeCards[3].value': this._fmt(today.reset || 0),
         })
 
-        // 本周 / 本月 / 今年 — 仅总计，不拆类型，预格式化
-        const ranges = [7, 30, 365]
+        // 本周 / 本月 / 今年 / 这辈子 — 仅总计，不拆类型，预格式化
+        const ranges = [7, 30, 365, 3650]
         const periodData = ranges.map((days) => {
             const history = statsStorage.getHistory(days)
             let total = 0

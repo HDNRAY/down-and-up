@@ -56,8 +56,8 @@ class StatsStorage {
                 this._addToIndex(this._today)
             }
 
-            // 归零不计入 total（只记 reset 次数），其余模式计入 total
-            if (mode !== 'reset') data.total++
+            // 所有 mode（含 reset）都计入 total
+            data.total++
             if (data[mode] === undefined) data[mode] = 0
             data[mode]++
 
