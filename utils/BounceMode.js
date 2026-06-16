@@ -200,11 +200,25 @@ export class BounceMode {
 
         ctx.restore()
 
-        // 乒乓球
+        // 乒乓球（黄色 + 高光）
         ctx.save()
-        ctx.fillStyle = '#F0F0F0'
+        const bx = w / 2
+        const by = this._ballY
+        const grad = ctx.createRadialGradient(
+            bx - BALL_RADIUS * 0.3,
+            by - BALL_RADIUS * 0.3,
+            BALL_RADIUS * 0.1,
+            bx,
+            by,
+            BALL_RADIUS,
+        )
+        grad.addColorStop(0, '#FFFFFF')
+        grad.addColorStop(0.2, '#FFD54F')
+        grad.addColorStop(0.7, '#FFB300')
+        grad.addColorStop(1, '#E6A000')
+        ctx.fillStyle = grad
         ctx.beginPath()
-        ctx.arc(w / 2, this._ballY, BALL_RADIUS, 0, Math.PI * 2)
+        ctx.arc(bx, by, BALL_RADIUS, 0, Math.PI * 2)
         ctx.fill()
         ctx.restore()
     }
