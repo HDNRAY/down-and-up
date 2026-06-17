@@ -14,10 +14,10 @@ app.audioEngine = audioEngine
 app.hapticEngine = hapticEngine
 
 const MODE_LIST = [
-    { id: 'pull', label: 'PULL' },
+    { id: 'pull', label: '拉' },
     // { id: 'scroll', label: 'SCROLL' },
-    { id: 'press', label: 'PRESS' },
-    { id: 'bounce', label: 'BOUNCE' },
+    { id: 'press', label: '按' },
+    { id: 'bounce', label: '抬' },
 ]
 
 Page({

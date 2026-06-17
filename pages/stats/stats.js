@@ -8,19 +8,19 @@ import statsStorage from '../../utils/storage'
 import { analyze } from '../../utils/insights'
 
 const MODES = ['press', 'pull', 'bounce']
-const MODE_LABELS = { press: 'PRESS', pull: 'PULL', bounce: 'BOUNCE' }
+const MODE_LABELS = { press: '按', pull: '拉', bounce: '抬' }
 const MODE_COLORS = { press: '#4CAF50', pull: '#FFC107', bounce: '#42A5F5', reset: '#FF7043' }
 const MODE_ORDER = ['press', 'pull', 'bounce', 'reset']
-const MODE_DISPLAY = { press: 'PRESS', pull: 'PULL', bounce: 'BOUNCE', reset: '归零' }
+const MODE_DISPLAY = { press: '按', pull: '拉', bounce: '抬', reset: '归零' }
 
 Page({
     data: {
         // Panel 1
         todayTotal: '0',
         modeCards: [
-            { id: 'press', label: 'PRESS', value: '0', color: '#4CAF50' },
-            { id: 'pull', label: 'PULL', value: '0', color: '#FFC107' },
-            { id: 'bounce', label: 'BOUNCE', value: '0', color: '#42A5F5' },
+            { id: 'press', label: '按', value: '0', color: '#4CAF50' },
+            { id: 'pull', label: '拉', value: '0', color: '#FFC107' },
+            { id: 'bounce', label: '抬', value: '0', color: '#42A5F5' },
             { id: 'reset', label: '归零', value: '0', color: '#FF7043' },
         ],
         periodLabels: ['本周', '本月', '今年', ''],

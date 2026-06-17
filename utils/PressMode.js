@@ -33,6 +33,18 @@ export class PressMode {
     }
 
     update(dt) {
+        // 爆炸计时与复位 — 独立于触摸状态，保证始终推进
+        if (this.exploded) {
+            this.explodeTimer += dt
+            // ~400ms 后自动刷新雷点，不等烟花放完也不等手指抬起
+            if (this.explodeTimer > 0.4) {
+                this.exploded = false
+                this.particles = []
+                this.proximityMs = 0
+                this._setMine()
+            }
+        }
+
         if (!this.touching || !this.mineSet) {
             this.proximityMs = 0
             return
@@ -58,37 +70,19 @@ export class PressMode {
         }
 
         this._vibeByDistance(d)
-
-        if (this.exploded) {
-            this.explodeTimer += dt
-            // 爆炸动画结束后自动重置雷点（手指不抬起继续玩）
-            if (this.explodeTimer > 1.0) {
-                this.exploded = false
-                this.particles = []
-                this.proximityMs = 0
-                this._setMine()
-            }
-        }
     }
 
     _vibeByDistance(d) {
         const now = Date.now()
-        let interval = 0
-        let type = 'light'
+        const t = Math.min(d / 200, 1) // 0=贴脸 1=最远
 
-        if (d < 40) {
-            interval = 60
-            type = 'heavy'
-        } else if (d < 80) {
-            interval = 100
-            type = 'medium'
-        } else if (d < 130) {
-            interval = 180
-            type = 'light'
-        } else if (d < 200) {
-            interval = 300
-            type = 'light'
-        } else return
+        // 指数曲线：近处急速脉冲，远处缓慢衰减，手感层次分明
+        const interval = 30 + Math.pow(t, 0.5) * 270
+
+        // 震动强度随距离连续变化
+        let type = 'light'
+        if (t < 0.2) type = 'heavy'
+        else if (t < 0.5) type = 'medium'
 
         if (now - this._lastVibeTime > interval) {
             this._lastVibeTime = now
@@ -235,17 +229,24 @@ export class PressMode {
         const dy = detectY - this.mineY
         const d = Math.sqrt(dx * dx + dy * dy)
 
-        // 同心圆（在手指上方探测）
-        if (d < 160) {
-            const ringCount = Math.max(3, Math.floor((160 - d) / 20))
+        // 同心圆（在手指上方探测）— 更早出现 + 来电闪烁
+        const radarRange = 220
+        if (d < radarRange) {
+            const ringCount = Math.max(3, Math.floor((radarRange - d) / 22))
             const offsetY = -80
+            const flashPulse = 0.55 + 0.45 * Math.sin(Date.now() / 160 + d / 30)
             ctx.save()
             for (let i = 0; i < ringCount; i++) {
                 const r = i * 12 + 10
-                const alpha = Math.max(0, 0.3 - (d / 160) * 0.25 - i * 0.05)
+                const alpha = Math.max(0, 0.25 - (d / radarRange) * 0.2 - i * 0.04)
                 if (alpha < 0.01) break
-                ctx.globalAlpha = alpha
-                ctx.strokeStyle = d < 50 ? '#FF6644' : d < 100 ? '#FFAA44' : '#88CCFF'
+                ctx.globalAlpha = alpha * flashPulse
+                // 连续渐变：近距离红色 → 远距离蓝色
+                const tColor = Math.min(d / 160, 1)
+                const R = Math.round(255 - 187 * tColor)
+                const G = Math.round(68 + 68 * tColor)
+                const B = Math.round(34 + 221 * tColor)
+                ctx.strokeStyle = `rgb(${R},${G},${B})`
                 ctx.lineWidth = 1.2
                 ctx.beginPath()
                 ctx.arc(this.fingerX, this.fingerY + offsetY, r, 0, Math.PI * 2)
@@ -285,6 +286,7 @@ export class PressMode {
         this.exploded = false
         this.particles = []
         this.proximityMs = 0
+        this.explodeTimer = 0
     }
 
     handleTouchMove(e) {

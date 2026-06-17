@@ -13,10 +13,18 @@ import { clearCanvas } from './renderer.js'
 const GRAVITY = 1500
 const LAUNCH_SPEED = 900
 const RAISE_DURATION = 0.12
-const PADDLE_Y_RATIO = 0.85
+const PADDLE_Y_RATIO = 0.82
 const BALL_RADIUS = 10
 const PADDLE_OFFSET_X = 35
 const MISS_Y_OFFSET = 80
+
+// 拍面尺寸（比原版大~25%，比之前略收，并上移防跑出屏幕）
+const PADDLE_HANDLE_W = 10
+const PADDLE_HANDLE_H = 30
+const PADDLE_FACE_RX = 20
+const PADDLE_FACE_RY = 28
+const PADDLE_FACE_OFFSET = 33
+const CATCH_TOLERANCE = PADDLE_FACE_RY * 0.4 + BALL_RADIUS
 
 export class BounceMode {
     constructor(config) {
@@ -131,7 +139,8 @@ export class BounceMode {
                 this._hitCooldown -= sd
             } else {
                 const catchY = this._faceSurfaceY()
-                if (this._ballY >= catchY) {
+                // 加大容错：球碰到拍面边缘即接住，与放大后的拍面视觉一致
+                if (this._ballY >= catchY - CATCH_TOLERANCE) {
                     this._ballY = catchY
                     this._ballVy = 0
 
@@ -159,17 +168,20 @@ export class BounceMode {
 
         if (!this._firstHit) {
             if (this.onCountChange) this.onCountChange(1)
-            if (this.haptic) this.haptic.medium()
+            if (this.haptic) {
+                this.haptic.heavy()
+                this.haptic.heavy()
+            }
             if (this.audio) this.audio.play('click')
         }
         this._firstHit = false
     }
 
-    /** 计算拍面中心的屏幕 Y（球应停在此处） */
+    /** 计算拍面中心的屏幕 Y */
     _faceSurfaceY() {
         const angle = ((0.5 - this._paddleAnim) * Math.PI) / 1.5
         const faceSide = this._paddleAnim < 0.5 ? 1 : -1
-        const centerY = this._paddleY + faceSide * 30 * Math.cos(angle)
+        const centerY = this._paddleY + faceSide * PADDLE_FACE_OFFSET * Math.cos(angle)
         return centerY
     }
 
@@ -187,16 +199,63 @@ export class BounceMode {
         ctx.translate(px, py)
         ctx.rotate(angle)
 
-        // 手柄（黄色，中心在锚点）
-        ctx.fillStyle = '#D4A030'
-        ctx.fillRect(-4.5, -13.5, 9, 27)
-
-        // 拍面（红色椭圆）
-        const faceSide = this._paddleAnim < 0.5 ? 1 : -1
-        ctx.fillStyle = '#FF4444'
+        // 手柄 — 木纹渐变 + 圆角
+        const hw2 = PADDLE_HANDLE_W / 2
+        const hh2 = PADDLE_HANDLE_H / 2
+        const hr2 = 3
+        const handleGrad = ctx.createLinearGradient(-hw2, 0, hw2, 0)
+        handleGrad.addColorStop(0, '#B08820')
+        handleGrad.addColorStop(0.25, '#D4A830')
+        handleGrad.addColorStop(0.5, '#E8C44A')
+        handleGrad.addColorStop(0.75, '#D4A830')
+        handleGrad.addColorStop(1, '#B08820')
+        ctx.fillStyle = handleGrad
         ctx.beginPath()
-        ctx.ellipse(0, faceSide * 30, 16.5, 24, 0, 0, Math.PI * 2)
+        ctx.moveTo(-hw2 + hr2, -hh2)
+        ctx.lineTo(hw2 - hr2, -hh2)
+        ctx.quadraticCurveTo(hw2, -hh2, hw2, -hh2 + hr2)
+        ctx.lineTo(hw2, hh2 - hr2)
+        ctx.quadraticCurveTo(hw2, hh2, hw2 - hr2, hh2)
+        ctx.lineTo(-hw2 + hr2, hh2)
+        ctx.quadraticCurveTo(-hw2, hh2, -hw2, hh2 - hr2)
+        ctx.lineTo(-hw2, -hh2 + hr2)
+        ctx.quadraticCurveTo(-hw2, -hh2, -hw2 + hr2, -hh2)
+        ctx.closePath()
         ctx.fill()
+
+        // 手柄中线暗纹
+        ctx.strokeStyle = 'rgba(0,0,0,0.08)'
+        ctx.lineWidth = 0.5
+        ctx.beginPath()
+        ctx.moveTo(0, -hh2 + hr2)
+        ctx.lineTo(0, hh2 - hr2)
+        ctx.stroke()
+
+        // 拍面 — 3D 径向渐变 + 高光边缘
+        const faceSide = this._paddleAnim < 0.5 ? 1 : -1
+        const faceGrad = ctx.createRadialGradient(
+            0,
+            faceSide * PADDLE_FACE_OFFSET - PADDLE_FACE_RY * 0.3,
+            PADDLE_FACE_RY * 0.1,
+            0,
+            faceSide * PADDLE_FACE_OFFSET,
+            PADDLE_FACE_RY,
+        )
+        faceGrad.addColorStop(0, '#EE3333')
+        faceGrad.addColorStop(0.3, '#CC2222')
+        faceGrad.addColorStop(0.7, '#AA1111')
+        faceGrad.addColorStop(1, '#880000')
+        ctx.fillStyle = faceGrad
+        ctx.beginPath()
+        ctx.ellipse(0, faceSide * PADDLE_FACE_OFFSET, PADDLE_FACE_RX, PADDLE_FACE_RY, 0, 0, Math.PI * 2)
+        ctx.fill()
+
+        // 拍面深色外缘
+        ctx.strokeStyle = 'rgba(0,0,0,0.2)'
+        ctx.lineWidth = 1.2
+        ctx.beginPath()
+        ctx.ellipse(0, faceSide * PADDLE_FACE_OFFSET, PADDLE_FACE_RX, PADDLE_FACE_RY, 0, 0, Math.PI * 2)
+        ctx.stroke()
 
         ctx.restore()
 

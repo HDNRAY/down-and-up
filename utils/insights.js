@@ -6,7 +6,7 @@
 
 const MODES = ['press', 'pull', 'bounce']
 const MODE_ORDER = ['press', 'pull', 'bounce', 'reset']
-const MODE_LABELS = { press: 'PRESS', pull: 'PULL', bounce: 'BOUNCE' }
+const MODE_LABELS = { press: '按', pull: '拉', bounce: '抬' }
 
 /**
  * 主入口
@@ -131,7 +131,7 @@ export function analyze(riverData, logs) {
             const tip = (SLOT_TIPS[m] && SLOT_TIPS[m][bestSlot]) || ''
             findings.push({
                 icon: slotObj ? slotObj.label.split(' ')[0] : '🕐',
-                title: `${slotObj ? slotObj.label.split(' ').slice(1).join('') : ''}的${MODE_LABELS[m]}`,
+                title: slotObj ? slotObj.label.split(' ').slice(1).join('') : '',,
                 desc: tip,
                 score: _scoreLabel(bestPct),
                 weight: bestPct,
