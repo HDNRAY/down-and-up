@@ -131,7 +131,7 @@ export function analyze(riverData, logs) {
             const tip = (SLOT_TIPS[m] && SLOT_TIPS[m][bestSlot]) || ''
             findings.push({
                 icon: slotObj ? slotObj.label.split(' ')[0] : '🕐',
-                title: slotObj ? slotObj.label.split(' ').slice(1).join('') : '',,
+                title: slotObj ? slotObj.label.split(' ').slice(1).join('') : '',
                 desc: tip,
                 score: _scoreLabel(bestPct),
                 weight: bestPct,
