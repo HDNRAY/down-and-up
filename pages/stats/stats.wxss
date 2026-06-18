@@ -225,18 +225,6 @@
     line-height: 1.5;
 }
 
-.insight-badge {
-    flex-shrink: 0;
-    background: rgba(255, 224, 160, 0.15);
-    color: #ffe0a0;
-    font-size: 20rpx;
-    padding: 4rpx 12rpx;
-    border-radius: 8rpx;
-    font-weight: bold;
-    font-family: 'Courier New', monospace;
-    margin-top: 2rpx;
-}
-
 .insights-empty {
     width: 100%;
     text-align: center;

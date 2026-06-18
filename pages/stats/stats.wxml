@@ -60,7 +60,6 @@
         <text class="insight-title">{{ insight.title }}</text>
         <text class="insight-desc">{{ insight.desc }}</text>
       </view>
-      <text class="insight-badge">{{ insight.score }}</text>
     </view>
   </view>
 

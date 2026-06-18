@@ -74,7 +74,8 @@ export class PressMode {
 
     _vibeByDistance(d) {
         const now = Date.now()
-        const t = Math.min(d / 200, 1) // 0=贴脸 1=最远
+        const maxDist = Math.sqrt(this.width * this.width + this.height * this.height)
+        const t = Math.min(d / maxDist, 1) // 0=贴脸 1=最远
 
         // 指数曲线：近处急速脉冲，远处缓慢衰减，手感层次分明
         const interval = 30 + Math.pow(t, 0.5) * 270
@@ -229,31 +230,42 @@ export class PressMode {
         const dy = detectY - this.mineY
         const d = Math.sqrt(dx * dx + dy * dy)
 
-        // 同心圆（在手指上方探测）— 更早出现 + 来电闪烁
-        const radarRange = 220
-        if (d < radarRange) {
-            const ringCount = Math.max(3, Math.floor((radarRange - d) / 22))
-            const offsetY = -80
-            const flashPulse = 0.55 + 0.45 * Math.sin(Date.now() / 160 + d / 30)
-            ctx.save()
-            for (let i = 0; i < ringCount; i++) {
-                const r = i * 12 + 10
-                const alpha = Math.max(0, 0.25 - (d / radarRange) * 0.2 - i * 0.04)
-                if (alpha < 0.01) break
-                ctx.globalAlpha = alpha * flashPulse
-                // 连续渐变：近距离红色 → 远距离蓝色
-                const tColor = Math.min(d / 160, 1)
-                const R = Math.round(255 - 187 * tColor)
-                const G = Math.round(68 + 68 * tColor)
-                const B = Math.round(34 + 221 * tColor)
-                ctx.strokeStyle = `rgb(${R},${G},${B})`
-                ctx.lineWidth = 1.2
-                ctx.beginPath()
-                ctx.arc(this.fingerX, this.fingerY + offsetY, r, 0, Math.PI * 2)
-                ctx.stroke()
-            }
-            ctx.restore()
+        // 同心圆（在手指上方探测）— 手指任意位置均显示，远处淡近处浓
+        const maxDist = Math.sqrt(this.width * this.width + this.height * this.height)
+        const tNorm = Math.min(d / maxDist, 1)
+        // 近处 4 环 → 远处 3 环
+        const ringCount = Math.max(3, Math.floor(4 * (1 - tNorm * 0.25)))
+        const offsetY = -80
+        // 亮3空1 柔和脉冲：缓入→长亮→渐暗→短暗
+        const cycleMs = 300 + d * 0.3
+        const phase = (Date.now() % cycleMs) / cycleMs
+        let flashPulse
+        if (phase < 0.1) {
+            flashPulse = 0.25 + 0.65 * (phase / 0.1) // fade in
+        } else if (phase < 0.75) {
+            flashPulse = 0.9 // hold bright
+        } else if (phase < 0.9) {
+            flashPulse = 0.9 - 0.65 * ((phase - 0.75) / 0.15) // fade out
+        } else {
+            flashPulse = 0.25 // hold dim
         }
+        ctx.save()
+        for (let i = 0; i < ringCount; i++) {
+            const r = i * 18 + 12
+            const alpha = Math.max(0, 0.35 * (1 - tNorm * 0.85) - i * 0.04)
+            if (alpha < 0.01) break
+            ctx.globalAlpha = alpha * flashPulse
+            // 连续渐变：近距离红色 → 远距离蓝色
+            const R = Math.round(255 - 187 * tNorm)
+            const G = Math.round(68 + 68 * tNorm)
+            const B = Math.round(34 + 221 * tNorm)
+            ctx.strokeStyle = `rgb(${R},${G},${B})`
+            ctx.lineWidth = 2.5
+            ctx.beginPath()
+            ctx.arc(this.fingerX, this.fingerY + offsetY, r, 0, Math.PI * 2)
+            ctx.stroke()
+        }
+        ctx.restore()
 
         // 极近时雷点提示
         if (d < 50) {

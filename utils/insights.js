@@ -12,10 +12,10 @@ const MODE_LABELS = { press: '按', pull: '拉', bounce: '抬' }
  * 主入口
  * @param {Object} riverData - getHourlyBuckets() 返回值
  * @param {Array} logs - getAllLogs() 返回值
- * @returns {Array<{ icon, title, desc, score, weight }>}
+ * @returns {Array<{ icon, title, desc, weight }>}
  */
 export function analyze(riverData, logs) {
-    if (!riverData || logs.length < 5) return []
+    if (!riverData || logs.length < 20) return []
 
     const findings = []
 
@@ -27,16 +27,15 @@ export function analyze(riverData, logs) {
     const allTotal = Object.values(modeTotal).reduce((a, b) => a + b, 0)
     if (allTotal === 0) return []
 
-    // ─── 1. 模式偏好（某模式 > 60% 才算偏好） ───
+    // ─── 1. 模式偏好（某模式 > 60% 才算偏好，且至少 50 次） ───
     for (const m of MODES) {
         const pct = Math.round((modeTotal[m] / allTotal) * 100)
-        if (pct > 60) {
+        if (pct > 60 && modeTotal[m] >= 50) {
             const info = MODE_FINDINGS[m]
             findings.push({
                 icon: info.icon,
                 title: info.title,
                 desc: `${MODE_LABELS[m]} 占了你所有操作的 ${pct}%，${info.desc}`,
-                score: _scoreLabel(pct),
                 weight: pct,
             })
         }
@@ -126,14 +125,13 @@ export function analyze(riverData, logs) {
                 bestSlot = k
             }
         }
-        if (bestPct > 35) {
+        if (bestPct > 35 && total >= 30) {
             const slotObj = SLOTS.find((s) => s.key === bestSlot)
             const tip = (SLOT_TIPS[m] && SLOT_TIPS[m][bestSlot]) || ''
             findings.push({
                 icon: slotObj ? slotObj.label.split(' ')[0] : '🕐',
                 title: slotObj ? slotObj.label.split(' ').slice(1).join('') : '',
                 desc: tip,
-                score: _scoreLabel(bestPct),
                 weight: bestPct,
             })
         }
@@ -193,7 +191,6 @@ export function analyze(riverData, logs) {
                 icon: '💥',
                 title: '爆发型选手',
                 desc: `你曾在 ${dateStr} 连续 ${bestBurst.window} 小时内操作了 ${bestBurst.count} 次（${modeInfo}），是平均水平的 ${ratio} 倍`,
-                score: _scoreLabel(Math.min(ratio * 15, 100)),
                 weight: Math.min(bestBurst.count, 80),
             })
         }
@@ -209,7 +206,6 @@ export function analyze(riverData, logs) {
                 icon: '🏆',
                 title: '终极不归零',
                 desc: `操作了 ${_fmt(allTotal)} 次从未归零，这是什么样的意志力`,
-                score: 'S',
                 weight: 100,
             })
         } else if (allTotal >= 10000) {
@@ -217,7 +213,6 @@ export function analyze(riverData, logs) {
                 icon: '🧹',
                 title: '从不归零',
                 desc: `操作了 ${_fmt(allTotal)} 次从未按过归零，一往无前`,
-                score: 'S',
                 weight: 90,
             })
         } else if (allTotal >= 1000) {
@@ -225,7 +220,6 @@ export function analyze(riverData, logs) {
                 icon: '🧹',
                 title: '从不归零',
                 desc: `操作了 ${_fmt(allTotal)} 次从未按过归零`,
-                score: 'A',
                 weight: 70,
             })
         }
@@ -242,14 +236,6 @@ const MODE_FINDINGS = {
     press: { icon: '🟢', title: '解压狂魔', desc: '你是绿色按钮的重度用户' },
     pull: { icon: '📖', title: '答案之友', desc: '你很喜欢从答案之书寻找指引' },
     bounce: { icon: '🏓', title: '乒乓小将', desc: '颠球是你的最爱' },
-}
-
-function _scoreLabel(v) {
-    if (v >= 90) return 'S'
-    if (v >= 75) return 'A'
-    if (v >= 55) return 'B'
-    if (v >= 35) return 'C'
-    return 'D'
 }
 
 function _parseHour(timeStr) {
