@@ -11,7 +11,7 @@
  */
 
 import { Spring } from './spring.js'
-import { clearCanvas, pathRoundRect } from './renderer.js'
+import { clearCanvas, pathRoundRect, drawModeHint } from './renderer.js'
 import { pickAnswer } from './answers.js'
 
 export class PullMode {
@@ -49,6 +49,11 @@ export class PullMode {
         // 末端震动
         this._endVibeTimer = 0
         this.MIN_VISIBLE = 20
+
+        // 玩法提示
+        this.hintText = '拉开答案'
+        this._hintCount = 0
+        this._hintFlashTime = 0
     }
 
     _calcLayout() {
@@ -82,6 +87,8 @@ export class PullMode {
             const bottomThreshold = this.MAX_PULL * 0.92
             if (this.pullOffset >= bottomThreshold && !this._fullPullCounted) {
                 this._fullPullCounted = true
+                this._hintCount++
+                this._hintFlashTime = Date.now()
                 if (this.onCountChange) this.onCountChange(1)
                 // 双连 heavy 震动 — 略过频率限制
                 if (this.haptic) {
@@ -113,6 +120,8 @@ export class PullMode {
             const w = this.width,
                 h = this.height
             clearCanvas(ctx, w, h)
+
+            drawModeHint(ctx, this.hintText, this._hintCount, this.cx, this.height * 0.8, this._hintFlashTime)
 
             this._drawPlate(ctx)
             this._drawBag(ctx)
@@ -362,6 +371,8 @@ export class PullMode {
         this._fullPullCounted = false
         this._endVibeTimer = 0
         this.currentAnswer = ''
+        this._hintCount = 0
+        this._hintFlashTime = 0
         this.snapSpring.setValue(0)
         this.snapSpring.velocity = 0
     }

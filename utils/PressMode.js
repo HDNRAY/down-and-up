@@ -3,7 +3,7 @@
  * 随机雷点，靠近震动，准心停留 → 爆炸
  */
 
-import { clearCanvas } from './renderer.js'
+import { clearCanvas, drawModeHint } from './renderer.js'
 
 export class PressMode {
     constructor(config) {
@@ -23,6 +23,11 @@ export class PressMode {
         this.exploded = false
         this._lastVibeTime = 0
         this.particles = []
+
+        // 玩法提示
+        this.hintText = '震感探花'
+        this._hintCount = 0
+        this._hintFlashTime = 0
     }
 
     _setMine() {
@@ -63,6 +68,8 @@ export class PressMode {
                 this.explodeTimer = 0
                 this._spawnParticles()
                 if (this.haptic) this.haptic.burst()
+                this._hintCount++
+                this._hintFlashTime = Date.now()
                 if (this.onCountChange) this.onCountChange(1)
             }
         } else {
@@ -178,6 +185,8 @@ export class PressMode {
         const w = this.width,
             h = this.height
         clearCanvas(ctx, w, h)
+
+        drawModeHint(ctx, this.hintText, this._hintCount, w / 2, h * 0.5, this._hintFlashTime)
 
         // 背景网格
         ctx.save()
@@ -317,5 +326,15 @@ export class PressMode {
     _findTouch(e) {
         if (!e.touches) return null
         return e.touches[0] || null
+    }
+
+    reset() {
+        this._hintCount = 0
+        this._hintFlashTime = 0
+        this.mineSet = false
+        this.touching = false
+        this.exploded = false
+        this.particles = []
+        this.proximityMs = 0
     }
 }

@@ -8,7 +8,7 @@
  * miss 时回到初始态，计数不受影响
  */
 
-import { clearCanvas } from './renderer.js'
+import { clearCanvas, drawModeHint } from './renderer.js'
 
 const GRAVITY = 1500
 const LAUNCH_SPEED = 900
@@ -51,6 +51,11 @@ export class BounceMode {
 
         this._paddleY = 0
         this._paddleX = 0
+
+        // 玩法提示
+        this.hintText = '抬腕颠球'
+        this._hintCount = 0
+        this._hintFlashTime = 0
 
         this._calcLayout()
     }
@@ -167,10 +172,11 @@ export class BounceMode {
         this._ballVy = -LAUNCH_SPEED
 
         if (!this._firstHit) {
+            this._hintCount++
+            this._hintFlashTime = Date.now()
             if (this.onCountChange) this.onCountChange(1)
             if (this.haptic) {
-                this.haptic.heavy()
-                this.haptic.heavy()
+                this.haptic.burst()
             }
             if (this.audio) this.audio.play('click')
         }
@@ -189,6 +195,8 @@ export class BounceMode {
         const w = this.width
         const h = this.height
         clearCanvas(ctx, w, h)
+
+        drawModeHint(ctx, this.hintText, this._hintCount, w / 2, h * 0.2, this._hintFlashTime)
 
         const px = this._paddleX
         const py = this._paddleY
@@ -282,13 +290,9 @@ export class BounceMode {
         ctx.restore()
     }
 
-    handleTouchStart() {
-        this._flickDetected = true
-    }
+    handleTouchStart() {}
     handleTouchMove() {}
-    handleTouchEnd() {
-        this._releaseDetected = true
-    }
+    handleTouchEnd() {}
 
     reset() {
         this._paddleAnim = 0
@@ -302,5 +306,7 @@ export class BounceMode {
         this._pendingRelease = false
         this._firstHit = true
         this._hitCooldown = 0
+        this._hintCount = 0
+        this._hintFlashTime = 0
     }
 }
