@@ -1,7 +1,7 @@
 /**
  * 统计页面 — 3 Panel
  * 1. 大数字：今日总计 / 各模式 / 本周本月今年
- * 2. 主题河流图：从首次使用至今，每小时各模式活动堆积
+ * 2. 星轨图：每天一颗星，螺旋排列，缓缓自转
  * 3. 数据特点：有趣的行为洞察
  */
 import statsStorage from '../../utils/storage'
@@ -34,8 +34,9 @@ Page({
     },
 
     onReady() {
-        // Canvas 初始化在 onReady 时执行
-        this._initRiverChart()
+        this._initBackArrow()
+        this._initStarChart()
+        this._startLoadingAnimation()
     },
 
     onShow() {
@@ -70,12 +71,101 @@ Page({
     },
 
     /* ========================================
-     * PANEL 2 — 主题河流图 (Canvas)
+     * 返回箭头
      * ======================================== */
 
-    _initRiverChart() {
-        const data = statsStorage.getHourlyBuckets()
-        if (!data || data.hourCount < 2) return
+    _initBackArrow() {
+        const query = wx.createSelectorQuery()
+        query.select('#back-arrow-canvas').fields({ node: true, size: true }).exec((res) => {
+            if (!res || !res[0]) return
+            const node = res[0].node
+            const ctx = node.getContext('2d')
+            const dpr = wx.getWindowInfo().pixelRatio
+            const w = res[0].width
+            const h = res[0].height
+            node.width = w * dpr
+            node.height = h * dpr
+            ctx.scale(dpr, dpr)
+
+            ctx.clearRect(0, 0, w, h)
+            ctx.strokeStyle = 'rgba(234, 234, 234, 0.6)'
+            ctx.lineWidth = 2
+            ctx.lineCap = 'round'
+            ctx.lineJoin = 'round'
+
+            // ← 箭头
+            const cx = w / 2, cy = h / 2
+            const len = w * 0.25
+            ctx.beginPath()
+            ctx.moveTo(cx + len, cy - len)
+            ctx.lineTo(cx - len * 0.3, cy)
+            ctx.lineTo(cx + len, cy + len)
+            ctx.stroke()
+        })
+    },
+
+    /* ========================================
+     * Loading 动画（星轨计算前的占位）
+     * ======================================== */
+
+    _startLoadingAnimation() {
+        this._loadingAnimId = null
+        this._loadingStart = Date.now()
+
+        const loop = () => {
+            try {
+                const ctx = this._starCtx
+                const w = this._starW
+                const h = this._starH
+                if (!ctx || !w || !h) return
+
+                const t = (Date.now() - this._loadingStart) / 800
+                const pulse = Math.sin(t * Math.PI) * 0.3 + 0.4  // 0.1~0.7
+
+                ctx.clearRect(0, 0, w, h)
+                const cx = w / 2, cy = h / 2
+                const r = Math.min(w, h) * 0.06
+
+                // 光晕
+                ctx.beginPath()
+                ctx.arc(cx, cy, r * 3, 0, Math.PI * 2)
+                ctx.fillStyle = `rgba(255, 255, 255, ${pulse * 0.06})`
+                ctx.fill()
+
+                // 圆点
+                ctx.beginPath()
+                ctx.arc(cx, cy, r * pulse, 0, Math.PI * 2)
+                ctx.fillStyle = `rgba(255, 255, 255, ${pulse})`
+                ctx.fill()
+            } catch (e) {
+                console.warn('Loading anim error:', e)
+            }
+
+            if (this._loadingAnimId !== 'STOP') {
+                this._loadingAnimId = setTimeout(loop, 50)
+            }
+        }
+        loop()
+    },
+
+    _stopLoadingAnimation() {
+        this._loadingAnimId = 'STOP'
+        // 清除 loading 画的残影
+        const ctx = this._starCtx
+        if (ctx && this._starW && this._starH) {
+            ctx.clearRect(0, 0, this._starW, this._starH)
+        }
+    },
+
+    /* ========================================
+     * PANEL 2 — 星空图 (Canvas)
+     * ======================================== */
+
+    _initStarChart() {
+        this._starCanvas = null
+        this._starCtx = null
+        this._starAnimId = null
+        this._starRotation = 0
 
         const query = wx.createSelectorQuery()
         query
@@ -85,112 +175,237 @@ Page({
                 if (!res || !res[0]) return
                 const canvas = res[0].node
                 const ctx = canvas.getContext('2d')
-                const dpr = wx.getSystemInfoSync().pixelRatio
-                const width = res[0].width
-                const height = res[0].height
+                const dpr = wx.getWindowInfo().pixelRatio
+                const w = res[0].width
+                const h = res[0].height
 
-                canvas.width = width * dpr
-                canvas.height = height * dpr
+                canvas.width = w * dpr
+                canvas.height = h * dpr
                 ctx.scale(dpr, dpr)
 
-                this._renderRiver(ctx, data, width, height)
-                // 河流图画完后做 Panel 3 分析
-                const insights = analyze(data, statsStorage.getAllLogs())
-                this.setData({ insights })
+                this._starCanvas = canvas
+                this._starCtx = ctx
+                this._starW = w
+                this._starH = h
+
+                // 延迟计算，不阻碍页面切换
+                setTimeout(() => {
+                    this._starData = this._buildStarData()
+                    this._stopLoadingAnimation()
+                    this._startStarAnimation()
+
+                    // 分析数据
+                    const data = statsStorage.getHourlyBuckets()
+                    if (data) {
+                        const insights = analyze(data, statsStorage.getAllLogs())
+                        this.setData({ insights })
+                    }
+                }, 0)
             })
     },
 
-    _renderRiver(ctx, data, w, h) {
-        const { buckets } = data
-        const n = buckets.length
-        if (n < 2) return
+    /** 构造星图数据：只取有活动的天，沿黄金角螺旋排列 */
+    _buildStarData() {
+        const maxR = Math.min(this._starW, this._starH) / 2 - 12
 
-        // 上下对称的河流图
-        // 上半：PRESS + PULL 从中间向上堆叠
-        // 下半：BOUNCE + 归零 从中间向下堆叠
-        const upperModes = ['press', 'pull']
-        const lowerModes = ['bounce', 'reset']
-        const colors = ['#4CAF50', '#FFC107', '#42A5F5', '#FF7043']
+        // 多取一些天，过滤掉没活动的
+        const history = statsStorage.getHistory(60)
+        let activeDays = history.filter(d => (d.total || 0) > 0)
 
-        // 计算每小时的堆叠上限和下限
-        const upperStack = buckets.map((b) => upperModes.reduce((s, m) => s + (b[m] || 0), 0))
-        const lowerStack = buckets.map((b) => lowerModes.reduce((s, m) => s + (b[m] || 0), 0))
-        const maxStack = Math.max(...upperStack.map((v, i) => v + lowerStack[i]), 1)
+        // 根据活跃天数自适应间距：星少→间距大填满画布，星多→间距小
+        const count = activeDays.length
+        const SPACING = Math.max(4, maxR / Math.max(count, 3))  // 无上限，让稀的星也能撑满画布
+        const MAX_VISIBLE = Math.floor(maxR / SPACING)
+        activeDays = activeDays.slice(-MAX_VISIBLE)
 
-        const centerY = h / 2
-        const maxHalfH = Math.max(h / 2 - 8, 10)
-        const scale = maxHalfH / maxStack
+        // 今天在数组末尾，取最近 7 个自然日标记为 recent
+        const todayStr = this._todayStr()
+        const recentStartIdx = activeDays.findIndex(d => {
+            // 找 7 天前的分界
+            const d7 = new Date()
+            d7.setDate(d7.getDate() - 7)
+            return d.date >= this._fmtDate(d7)
+        })
 
-        // 3-bin moving average
-        const smooth = (arr) => {
-            const r = new Array(n).fill(0)
-            for (let i = 0; i < n; i++) {
-                let sum = 0,
-                    cnt = 0
-                for (let j = -1; j <= 1; j++) {
-                    const idx = i + j
-                    if (idx >= 0 && idx < n) {
-                        sum += arr[idx]
-                        cnt++
-                    }
-                }
-                r[i] = sum / cnt
+        let maxCount = 1
+        for (const d of activeDays) if (d.total > maxCount) maxCount = d.total
+
+        const GOLDEN_ANGLE = 137.508 * Math.PI / 180
+        const modeRgb = {
+            press:  [102, 187, 106],
+            pull:   [255, 213,  79],
+            bounce: [ 66, 165, 245],
+            reset:  [255, 112,  67],
+        }
+
+        const stars = activeDays.map((day, idx) => {
+            const angle = idx * GOLDEN_ANGLE
+            const radius = (idx + 1) * SPACING
+            const total = day.total || 0
+            const ratio = maxCount > 0 ? total / maxCount : 0
+            const size = 3 + Math.sqrt(ratio) * 11
+
+            const sorted = ['press', 'pull', 'bounce', 'reset']
+                .map(k => ({ key: k, count: day[k] || 0 }))
+                .filter(m => m.count > 0)
+                .sort((a, b) => b.count - a.count)
+
+            const colors = sorted.map(m => `rgb(${modeRgb[m.key].join(',')})`)
+
+            return {
+                x: radius * Math.cos(angle),
+                y: radius * Math.sin(angle),
+                count: total,
+                ratio,
+                colors,
+                size,
+                recent: recentStartIdx >= 0 && idx >= recentStartIdx,
             }
-            return r
+        })
+
+        return { stars, maxCount }
+    },
+
+    _todayStr() {
+        const d = new Date()
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+    },
+
+    _fmtDate(d) {
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+    },
+
+    /** 启动星空动画循环 */
+    _startStarAnimation() {
+        let lastTime = Date.now()
+
+        const loop = () => {
+            try {
+                const now = Date.now()
+                const dt = Math.min((now - lastTime) / 1000, 0.05)
+                lastTime = now
+
+                this._starRotation += dt * 0.03 // 每帧转 0.03 rad ≈ 1.7°/s
+
+                this._renderStars()
+            } catch (e) {
+                console.warn('Star animation error:', e)
+                lastTime = Date.now()
+            }
+
+            if (this._starCanvas && this._starCanvas.requestAnimationFrame) {
+                this._starAnimId = this._starCanvas.requestAnimationFrame(loop)
+            }
         }
 
-        // 绘制上半层（先拉再按，离中心最远的先画）
-        let cumUpper = new Array(n).fill(0)
-        for (const mode of upperModes) {
-            const raw = buckets.map((b) => (b[mode] || 0) + cumUpper[b.hour])
-            const smoothTop = smooth(raw)
-
-            const topYs = smoothTop.map((v) => centerY - v * scale)
-            const botYs = cumUpper.map((v) => centerY - v * scale)
-
-            this._drawLayer(ctx, topYs, botYs, n, w, colors[MODE_ORDER.indexOf(mode)])
-            cumUpper = raw
-        }
-
-        // 绘制下半层
-        let cumLower = new Array(n).fill(0)
-        for (const mode of lowerModes) {
-            const raw = buckets.map((b) => (b[mode] || 0) + cumLower[b.hour])
-            const smoothBot = smooth(raw)
-
-            const topYs = cumLower.map((v) => centerY + v * scale)
-            const botYs = smoothBot.map((v) => centerY + v * scale)
-
-            this._drawLayer(ctx, topYs, botYs, n, w, colors[MODE_ORDER.indexOf(mode)])
-            cumLower = raw
+        if (this._starCanvas && this._starCanvas.requestAnimationFrame) {
+            this._starAnimId = this._starCanvas.requestAnimationFrame(loop)
+        } else {
+            loop()
         }
     },
 
-    /** 绘制一层填充区域 */
-    _drawLayer(ctx, topYs, botYs, n, w, color) {
-        ctx.beginPath()
-        ctx.moveTo(0, topYs[0])
+    /** 渲染星轨图 */
+    _renderStars() {
+        const ctx = this._starCtx
+        const w = this._starW
+        const h = this._starH
+        if (!ctx || !w || !h) return
 
-        for (let i = 1; i < n; i++) {
-            const x = (i / (n - 1)) * w
-            const px = ((i - 1) / (n - 1)) * w
-            const cpx = (px + x) / 2
-            ctx.bezierCurveTo(cpx, topYs[i - 1], cpx, topYs[i], x, topYs[i])
+        // 安全守卫：数据还没准备好
+        if (!this._starData || !this._starData.stars) return
+
+        ctx.clearRect(0, 0, w, h)
+        ctx.save()
+
+        const cx = w / 2
+        const cy = h / 2
+
+        // 全图移到画布中心，缓缓自转
+        ctx.translate(cx, cy)
+        ctx.rotate(this._starRotation)
+
+        const stars = this._starData.stars
+        if (stars.length < 2) {
+            ctx.restore()
+            return
         }
 
-        const lx = w
-        ctx.lineTo(lx, botYs[n - 1])
-        for (let i = n - 2; i >= 0; i--) {
-            const x = (i / (n - 1)) * w
-            const nx = ((i + 1) / (n - 1)) * w
-            const cpx = (x + nx) / 2
-            ctx.bezierCurveTo(cpx, botYs[i + 1], cpx, botYs[i], x, botYs[i])
+        // ─── 连线：沿时间顺序连接有游玩的天（无空白节点） ───
+        for (let i = 1; i < stars.length; i++) {
+            ctx.beginPath()
+            ctx.moveTo(stars[i - 1].x, stars[i - 1].y)
+            ctx.lineTo(stars[i].x, stars[i].y)
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'
+            ctx.lineWidth = 0.5
+            ctx.stroke()
         }
-        ctx.closePath()
 
-        ctx.fillStyle = color
-        ctx.globalAlpha = 0.75
-        ctx.fill()
+        // 近 7 天连线更亮
+        const recentStars = stars.filter(s => s.recent)
+        for (let i = 1; i < recentStars.length; i++) {
+            ctx.beginPath()
+            ctx.moveTo(recentStars[i - 1].x, recentStars[i - 1].y)
+            ctx.lineTo(recentStars[i].x, recentStars[i].y)
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'
+            ctx.lineWidth = 0.7
+            ctx.stroke()
+        }
+
+        // ─── 星星（年轮式同心环） ───
+        const pulse = Math.sin(Date.now() / 800) * 0.06 + 0.94  // 呼吸幅度减半
+
+        for (const star of stars) {
+            const s = Math.max(star.size * pulse, 2)
+            const cols = star.colors
+            if (!cols || cols.length === 0) continue
+
+            // 光晕（用主色）
+            if (s > 5) {
+                ctx.beginPath()
+                ctx.arc(star.x, star.y, s * 1.8, 0, Math.PI * 2)
+                ctx.fillStyle = cols[0].replace('rgb', 'rgba').replace(')', ',0.1)')
+                ctx.fill()
+            }
+
+            // 年轮：最外层 = 最多模式，最内层 = 最少模式
+            // 半径比例：外圈 1.0, 中圈 0.6, 内圈 0.3
+            const rings = [
+                { r: s,        color: cols[0] },
+                { r: s * 0.6,  color: cols.length > 1 ? cols[1] : cols[0] },
+                { r: s * 0.3,  color: cols.length > 2 ? cols[2] : (cols[1] || cols[0]) },
+            ]
+
+            ctx.shadowColor = cols[0].replace('rgb', 'rgba').replace(')', ',0.4)')
+            ctx.shadowBlur = s * 1.5
+
+            for (const ring of rings) {
+                if (ring.r < 1.5) continue
+                ctx.beginPath()
+                ctx.arc(star.x, star.y, ring.r, 0, Math.PI * 2)
+                ctx.fillStyle = ring.color
+                ctx.fill()
+            }
+
+            ctx.shadowBlur = 0
+
+            // 白色高亮芯
+            if (s > 4) {
+                ctx.beginPath()
+                ctx.arc(star.x, star.y, Math.max(s * 0.2, 1), 0, Math.PI * 2)
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.35)'
+                ctx.fill()
+            }
+        }
+
+        ctx.restore()
+    },
+
+    onUnload() {
+        if (this._starAnimId && this._starCanvas) {
+            this._starCanvas.cancelAnimationFrame(this._starAnimId)
+            this._starAnimId = null
+        }
     },
 
     /* ========================================
@@ -199,14 +414,6 @@ Page({
 
     onBack() {
         wx.navigateBack()
-    },
-
-    _todayStr() {
-        const d = new Date()
-        const y = d.getFullYear()
-        const m = String(d.getMonth() + 1).padStart(2, '0')
-        const day = String(d.getDate()).padStart(2, '0')
-        return `${y}-${m}-${day}`
     },
 
     _fmt(n) {

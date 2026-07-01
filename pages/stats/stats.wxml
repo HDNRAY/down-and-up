@@ -1,12 +1,11 @@
 <!-- 统计页面 — 3 Panel：大数字 / 河流图 / 数据特点 -->
 <view class="stats-page">
   
-  <!-- ── 顶部导航 ── -->
+  <!-- ── 顶部导航（纯图形返回键，无文字） ── -->
   <view class="stats-header">
     <view class="stats-back" bindtap="onBack">
-      <text class="back-arrow">←</text>
+      <canvas type="2d" id="back-arrow-canvas" class="back-arrow-canvas"></canvas>
     </view>
-    <text class="stats-header-title">统计</text>
     <view class="stats-header-spacer"></view>
   </view>
 
@@ -41,10 +40,10 @@
   </view>
 
   <!-- ════════════════════════════════════
-       PANEL 2 — 主题河流图
+       PANEL 2 — 星座星空图
        ════════════════════════════════════ -->
   <view class="stats-river-section">
-    <text class="stats-section-title">活动河流</text>
+    <text class="stats-section-title">星轨</text>
     <canvas id="river-canvas" class="stats-river-canvas" type="2d"></canvas>
   </view>
 
