@@ -43,7 +43,6 @@
   },
   "compileType": "miniprogram",
   "libVersion": "3.16.1",
-  "appid": "wx7d9aee0f5d3dab2a",
   "projectname": "解压计数器",
   "condition": {},
   "simulatorPluginLibVersion": {},
